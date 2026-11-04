@@ -256,6 +256,7 @@ import { suggestAppAccessForRemote } from "./sourceControlAppAccessToast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "./ui/tooltip";
 import { ComposerHandleContext, useComposerHandleContext } from "../composerHandleContext";
 import type { ChatComposerHandle } from "./chat/ChatComposer";
+import { useUiStateStore } from "../uiStateStore";
 import { pickableProjectGroups } from "@t3tools/client-runtime/state/project-grouping";
 import { buildSidebarProjectPickerEntries } from "../sidebarProjectGrouping";
 import { PullRequestGlyph } from "~/components/pullRequest/pullRequestIcons";
@@ -769,6 +770,9 @@ function OpenCommandPaletteDialog(props: {
 
   const openProjectFromSearch = async (project: (typeof projects)[number]) => {
     const group = projectGroupByTargetKey.get(`${project.environmentId}:${project.id}`);
+    if (group) {
+      useUiStateStore.getState().setSidebarProjectScopeKeys([group.projectKey]);
+    }
     const groupedProjectKeys = group
       ? new Set(
           group.memberProjectRefs.map(
