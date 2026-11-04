@@ -257,28 +257,49 @@ it.layer(NodeServices.layer)("keybindings", (it) => {
       addedKey: "mod+enter",
       command: "composer.sendBackground",
       when: "composerFocus && draftThreadRoute",
+      addedWhen: "composerFocus && draftThreadRoute",
     },
     {
       key: "mod+t",
       addedKey: "mod+alt+t",
       command: "rightPanel.new",
       when: "rightPanelOpen && !terminalFocus",
+      addedWhen: "rightPanelOpen && !terminalFocus",
     },
-  ] as const)("adds a late default to $command once", ({ key, addedKey, command, when }) =>
-    Effect.gen(function* () {
-      const { keybindingsConfigPath } = yield* ServerConfig.ServerConfig;
-      const keybindings = yield* Keybindings.Keybindings;
-      const existing = { key, command, when };
-      const rulesForCommand = Effect.map(readKeybindingsConfig(keybindingsConfigPath), (rules) =>
-        rules.filter((entry) => entry.command === command),
-      );
-      yield* writeKeybindingsConfig(keybindingsConfigPath, [existing]);
-      yield* keybindings.syncDefaultKeybindingsOnStartup;
-      assert.deepStrictEqual(yield* rulesForCommand, [{ key: addedKey, command, when }, existing]);
-      yield* writeKeybindingsConfig(keybindingsConfigPath, [existing]);
-      yield* keybindings.syncDefaultKeybindingsOnStartup;
-      assert.deepStrictEqual(yield* rulesForCommand, [existing]);
-    }).pipe(Effect.provide(layerKeybindings())),
+    {
+      key: "mod+shift+[",
+      addedKey: "mod+shift+arrowup",
+      command: "thread.previous",
+      when: undefined,
+      addedWhen: "!modelPickerOpen",
+    },
+    {
+      key: "mod+shift+]",
+      addedKey: "mod+shift+arrowdown",
+      command: "thread.next",
+      when: undefined,
+      addedWhen: "!modelPickerOpen",
+    },
+  ] as const)(
+    "adds a late default to $command once",
+    ({ key, addedKey, command, when, addedWhen }) =>
+      Effect.gen(function* () {
+        const { keybindingsConfigPath } = yield* ServerConfig.ServerConfig;
+        const keybindings = yield* Keybindings.Keybindings;
+        const existing = { key, command, ...(when === undefined ? {} : { when }) };
+        const rulesForCommand = Effect.map(readKeybindingsConfig(keybindingsConfigPath), (rules) =>
+          rules.filter((entry) => entry.command === command),
+        );
+        yield* writeKeybindingsConfig(keybindingsConfigPath, [existing]);
+        yield* keybindings.syncDefaultKeybindingsOnStartup;
+        assert.deepStrictEqual(yield* rulesForCommand, [
+          { key: addedKey, command, when: addedWhen },
+          existing,
+        ]);
+        yield* writeKeybindingsConfig(keybindingsConfigPath, [existing]);
+        yield* keybindings.syncDefaultKeybindingsOnStartup;
+        assert.deepStrictEqual(yield* rulesForCommand, [existing]);
+      }).pipe(Effect.provide(layerKeybindings())),
   );
 
   it.effect("migrates standard project and panel shortcuts while preserving custom bindings", () =>

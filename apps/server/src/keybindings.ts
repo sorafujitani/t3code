@@ -101,6 +101,16 @@ const LATE_DEFAULT_KEYBINDINGS: ReadonlyArray<{
   readonly rule: KeybindingRule;
 }> = [
   {
+    id: "thread.previous:mod+shift+arrowup",
+    alongside: { key: "mod+shift+[", command: "thread.previous" },
+    rule: { key: "mod+shift+arrowup", command: "thread.previous", when: "!modelPickerOpen" },
+  },
+  {
+    id: "thread.next:mod+shift+arrowdown",
+    alongside: { key: "mod+shift+]", command: "thread.next" },
+    rule: { key: "mod+shift+arrowdown", command: "thread.next", when: "!modelPickerOpen" },
+  },
+  {
     id: "rightPanel.new:mod+alt+t",
     alongside: {
       key: "mod+t",
