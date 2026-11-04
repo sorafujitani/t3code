@@ -261,6 +261,12 @@ DMGs default to the host architecture. Use `--arch` to choose another target and
 to retain packaging files for inspection. Run `vp run dist:desktop:artifact --help` for other
 options.
 
+On macOS, run `vp run app-sync` to build this checkout and replace
+`/Applications/T3 Code (Beta).app`. The previous app is kept under
+`~/Library/Application Support/T3-local-build-backups/`. The local app has no
+automatic update feed. Quit and reopen T3 Code after the command finishes;
+the command does not restart the running app or change its conversation data.
+
 ### Prepared server bytecode
 
 Native macOS and Windows desktop artifact builds generate server bytecode with the packaged
