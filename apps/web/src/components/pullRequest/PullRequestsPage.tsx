@@ -1414,12 +1414,6 @@ export function PullRequestsPage() {
       },
     );
   });
-  const closeActiveSurfaceFromShortcut = useEffectEvent((event: KeyboardEvent) => {
-    if (activePullRequestSurface === null) return;
-    event.preventDefault();
-    event.stopPropagation();
-    if (!event.repeat) closeSurface(activePullRequestSurface);
-  });
   const toggleRightPanelFromShortcut = useEffectEvent((event: KeyboardEvent) => {
     if (!rightPanelAvailable) return;
     event.preventDefault();
@@ -1439,7 +1433,6 @@ export function PullRequestsPage() {
       const command = resolveShortcutCommand(event, keybindings, {
         context: getShortcutContext(),
       });
-      if (command === "rightPanel.close") closeActiveSurfaceFromShortcut(event);
       if (command === "rightPanel.toggle") toggleRightPanelFromShortcut(event);
       if (command === "rightPanel.toggleMaximized") toggleRightPanelMaximizedFromShortcut(event);
       if (command === "thread.copyReference") copyPullRequestFromShortcut(event);

@@ -61,7 +61,6 @@ interface RightPanelActionsInput {
   readonly activeProjectCwd: string | null;
   readonly explicitDiffOpenRef: { current: ScopedThreadRef | null };
   readonly onDiffPanelOpen: (() => void) | undefined;
-  readonly closeRightPanelSurface: (surface: RightPanelSurface) => void;
 }
 
 /**
@@ -70,7 +69,6 @@ interface RightPanelActionsInput {
  */
 export function useRightPanelActions(input: RightPanelActionsInput) {
   const {
-    closeRightPanelSurface,
     activeThreadRef,
     activeProject,
     activeRightPanelSurface,
@@ -333,10 +331,6 @@ export function useRightPanelActions(input: RightPanelActionsInput) {
       if (!event.repeat) toggleRightPanelMaximized();
     },
     "threadPanel.toggle": () => toggleThreadPanel(),
-    "rightPanel.close": ({ event }) => {
-      if (!activeRightPanelSurface) return false;
-      if (!event.repeat) closeRightPanelSurface(activeRightPanelSurface);
-    },
     "diff.toggle": () => onToggleDiff(),
   } satisfies ChatShortcutCommands;
 
