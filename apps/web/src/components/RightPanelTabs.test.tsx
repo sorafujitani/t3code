@@ -2,7 +2,7 @@ import { EnvironmentId, ThreadId, type ThreadPullRequestLink } from "@t3tools/co
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  adjacentSideChat,
+  adjacentPanelSurface,
   resolvePullRequestTabLink,
   surfaceShortcutActionForKey,
   surfaceShortcutTargetsTypingContext,
@@ -169,18 +169,18 @@ describe("pull request tab snapshots", () => {
   });
 });
 
-describe("side chat tab navigation", () => {
-  it("skips other surfaces, wraps in both directions, and leaves other active tabs alone", () => {
+describe("panel tab navigation", () => {
+  it("moves across every panel surface and wraps in both directions", () => {
     const surfaces = [
       { kind: "side-chat", id: "side-chat:a", threadId: ThreadId.make("a") },
       { kind: "diff", id: "diff" },
       { kind: "side-chat", id: "side-chat:b", threadId: ThreadId.make("b") },
     ] as const;
-    expect(adjacentSideChat(surfaces, "side-chat:a", 1)).toBe(surfaces[2]);
-    expect(adjacentSideChat(surfaces, "side-chat:a", -1)).toBe(surfaces[2]);
-    expect(adjacentSideChat(surfaces, "side-chat:b", 1)).toBe(surfaces[0]);
-    expect(adjacentSideChat(surfaces, "side-chat:b", -1)).toBe(surfaces[0]);
-    expect(adjacentSideChat(surfaces, "diff", 1)).toBeUndefined();
-    expect(adjacentSideChat(surfaces.slice(0, 1), "side-chat:a", 1)).toBeUndefined();
+    expect(adjacentPanelSurface(surfaces, "side-chat:a", 1)).toBe(surfaces[1]);
+    expect(adjacentPanelSurface(surfaces, "side-chat:a", -1)).toBe(surfaces[2]);
+    expect(adjacentPanelSurface(surfaces, "side-chat:b", 1)).toBe(surfaces[0]);
+    expect(adjacentPanelSurface(surfaces, "side-chat:b", -1)).toBe(surfaces[1]);
+    expect(adjacentPanelSurface(surfaces, "diff", 1)).toBe(surfaces[2]);
+    expect(adjacentPanelSurface(surfaces.slice(0, 1), "side-chat:a", 1)).toBeUndefined();
   });
 });
