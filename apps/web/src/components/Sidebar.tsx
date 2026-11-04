@@ -1040,6 +1040,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   const [optimisticDrop, setOptimisticDrop] = useState<SidebarOptimisticDrop | null>(null);
   const threadSearchInputRef = useRef<HTMLInputElement>(null);
   const [threadSearchQuery, setThreadSearchQuery] = useState("");
+  const [projectToOpen, setProjectToOpen] = useState<string | null>(null);
   const [searchHighlightKey, setSearchHighlightKey] = useState<string | null>(null);
   const connectedEnvironmentIds = useConnectedEnvironmentIds();
   const queuePendingFileDrop = useSidebarPendingFileDropStore((s) => s.queuePendingFileDrop);
@@ -1465,6 +1466,18 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       params: buildThreadRouteParams(threadRef),
     });
   };
+
+  const openSelectedProjectThread = useStableCallback(() => {
+    if (projectToOpen === null || projectScopeKey !== projectToOpen) return;
+    setProjectToOpen(null);
+    const firstThread = orderedThreadKeys[0];
+    const thread = firstThread ? threadByKey.get(firstThread) : undefined;
+    if (thread) void navigateToThread(scopeThreadRef(thread.environmentId, thread.id));
+  });
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- navigates after the selected project scope has produced its sidebar ordering
+  useEffect(() => {
+    if (projectToOpen !== null && projectScopeKey === projectToOpen) openSelectedProjectThread();
+  }, [projectToOpen, projectScopeKey, openSelectedProjectThread]);
 
   const handleThreadFileDrop = async (threadRef: ScopedThreadRef, files: File[]) => {
     const dropId = queuePendingFileDrop({ threadRef, files });
@@ -3038,7 +3051,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                       eventDetails.cancel();
                       toggleProjectScopeKey(item.value);
                     } else {
+                      setThreadSearchQuery("");
                       setProjectScopeKeys([item.value]);
+                      setProjectToOpen(item.value);
                     }
                   }}
                 >

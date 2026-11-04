@@ -1,4 +1,4 @@
-import { DEFAULT_CLIENT_SETTINGS, EnvironmentId, ProjectId } from "@t3tools/contracts";
+import { DEFAULT_CLIENT_SETTINGS, EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
 import { describe, expect, it, vi } from "vite-plus/test";
 import { userEvent } from "vite-plus/test/browser";
 
@@ -6,7 +6,9 @@ import { render } from "../../test/render";
 import { openCommandPalette } from "../commandPaletteBus";
 import { useHandleNewThread } from "../hooks/useHandleNewThread";
 import { __setClientSettingsForTests, getClientSettings } from "../hooks/useSettings";
-import { useProjects } from "../state/entities";
+import { useProjects, useQuietThreadShells } from "../state/entities";
+import { makeThreadFixture } from "../test-fixtures";
+import { useUiStateStore } from "../uiStateStore";
 import type { Project } from "../types";
 import Sidebar from "./Sidebar";
 import { SidebarProvider } from "./ui/sidebar";
@@ -86,4 +88,46 @@ describe("sidebar header new thread", () => {
       expect(startThread).toHaveBeenCalledExactlyOnceWith(currentProjectRef);
     }
   });
+});
+
+it("opens the top thread after selecting a project scope", async () => {
+  using stack = new DisposableStack();
+  const previousSettings = getClientSettings();
+  stack.defer(() => __setClientSettingsForTests(previousSettings));
+  __setClientSettingsForTests(DEFAULT_CLIENT_SETTINGS);
+  useUiStateStore.setState(useUiStateStore.getInitialState(), true);
+  const projects = [project("active"), project("idle")];
+  vi.mocked(useProjects).mockReturnValue(projects);
+  const threads = [
+    makeThreadFixture({
+      id: ThreadId.make("older"),
+      environmentId: EnvironmentId.make("local"),
+      projectId: ProjectId.make("idle"),
+      latestUserMessageAt: "2026-01-01T00:00:00.000Z",
+    }),
+    makeThreadFixture({
+      id: ThreadId.make("newer"),
+      environmentId: EnvironmentId.make("local"),
+      projectId: ProjectId.make("idle"),
+      latestUserMessageAt: "2026-01-02T00:00:00.000Z",
+    }),
+  ];
+  vi.mocked(useQuietThreadShells).mockReturnValue(threads);
+  stack.defer(() => vi.mocked(useQuietThreadShells).mockReset());
+  vi.mocked(useHandleNewThread).mockReturnValue({
+    activeDraftThread: null,
+    activeThread: null,
+    defaultProjectRef: null,
+    handleNewThread: vi.fn(),
+    routeDraftId: null,
+    routeThreadRef: null,
+  });
+  await using screen = await render(
+    <SidebarProvider>
+      <Sidebar routeReveal={{ observedKey: null, pendingKey: null }} />
+    </SidebarProvider>,
+  );
+  await userEvent.click(screen.getByLabelText("Filter threads by project", { exact: true }));
+  await userEvent.click(screen.getByRole("option", { name: /idle/ }));
+  await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/newer"));
 });
