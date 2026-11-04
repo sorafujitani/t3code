@@ -97,6 +97,7 @@ function isSameKeybindingRule(left: KeybindingRule, right: KeybindingRule): bool
 const LATE_DEFAULT_KEYBINDINGS: ReadonlyArray<{
   readonly id: string;
   readonly alongside: KeybindingRule;
+  readonly replace?: boolean;
   readonly rule: KeybindingRule;
 }> = [
   {
@@ -120,6 +121,38 @@ const LATE_DEFAULT_KEYBINDINGS: ReadonlyArray<{
       command: "composer.sendBackground",
       when: "composerFocus && draftThreadRoute",
     },
+  },
+  {
+    id: "sidebar.searchProjects:shift-navigation-v1",
+    replace: true,
+    alongside: { key: "mod+alt+p", command: "sidebar.searchProjects", when: "!terminalFocus" },
+    rule: { key: "mod+shift+p", command: "sidebar.searchProjects", when: "!terminalFocus" },
+  },
+  {
+    id: "thread.pin:shift-navigation-v1",
+    replace: true,
+    alongside: { key: "mod+shift+p", command: "thread.pin", when: "!terminalFocus" },
+    rule: { key: "mod+alt+p", command: "thread.pin", when: "!terminalFocus" },
+  },
+  {
+    id: "sideChat.previous:shift-navigation-v1",
+    replace: true,
+    alongside: {
+      key: "mod+arrowleft",
+      command: "sideChat.previous",
+      when: "rightPanelOpen && !terminalFocus",
+    },
+    rule: { key: "mod+shift+arrowleft", command: "sideChat.previous", when: "rightPanelFocus" },
+  },
+  {
+    id: "sideChat.next:shift-navigation-v1",
+    replace: true,
+    alongside: {
+      key: "mod+arrowright",
+      command: "sideChat.next",
+      when: "rightPanelOpen && !terminalFocus",
+    },
+    rule: { key: "mod+shift+arrowright", command: "sideChat.next", when: "rightPanelFocus" },
   },
 ];
 
@@ -481,7 +514,15 @@ const make = Effect.gen(function* () {
         yield* Cache.invalidate(resolvedConfigCache, resolvedConfigCacheKey);
         return;
       }
-      const customConfig = runtimeConfig.keybindings;
+      const customConfig = runtimeConfig.keybindings.map(
+        (entry) =>
+          pendingLateDefaults.find(
+            (late) => late.replace && isSameKeybindingRule(entry, late.alongside),
+          )?.rule ?? entry,
+      );
+      const replacedDefaults = customConfig.some(
+        (entry, index) => entry !== runtimeConfig.keybindings[index],
+      );
       const existingCommands = new Set(customConfig.map((entry) => entry.command));
       const missingDefaults: KeybindingRule[] = [];
       const shortcutConflictWarnings: Array<{
@@ -508,8 +549,9 @@ const make = Effect.gen(function* () {
         }
         missingDefaults.push(defaultRule);
       }
-      for (const { alongside, rule } of pendingLateDefaults) {
+      for (const { alongside, rule, replace } of pendingLateDefaults) {
         if (
+          !replace &&
           customConfig.some((entry) => isSameKeybindingRule(entry, alongside)) &&
           !customConfig.some((entry) => hasSameShortcutContext(entry, rule))
         ) {
@@ -551,7 +593,7 @@ const make = Effect.gen(function* () {
           commands: skippedDefaults.map((rule) => rule.command),
         });
       }
-      if (defaultsToAppend.length > 0) {
+      if (defaultsToAppend.length > 0 || replacedDefaults) {
         yield* writeConfigAtomically([...defaultsToAppend, ...customConfig]);
       }
       const settledLateDefaults = pendingLateDefaults.filter(

@@ -281,6 +281,43 @@ it.layer(NodeServices.layer)("keybindings", (it) => {
     }).pipe(Effect.provide(layerKeybindings())),
   );
 
+  it.effect("migrates standard project and panel shortcuts while preserving custom bindings", () =>
+    Effect.gen(function* () {
+      const { keybindingsConfigPath } = yield* ServerConfig.ServerConfig;
+      const service = yield* Keybindings.Keybindings;
+      yield* writeKeybindingsConfig(keybindingsConfigPath, [
+        { key: "mod+alt+p", command: "sidebar.searchProjects", when: "!terminalFocus" },
+        { key: "mod+shift+p", command: "thread.pin", when: "!terminalFocus" },
+        {
+          key: "mod+arrowleft",
+          command: "sideChat.previous",
+          when: "rightPanelOpen && !terminalFocus",
+        },
+        { key: "mod+alt+9", command: "sideChat.next" },
+      ]);
+      yield* service.syncDefaultKeybindingsOnStartup;
+      const rules = yield* readKeybindingsConfig(keybindingsConfigPath);
+      assert.deepStrictEqual(
+        rules.filter((r) => r.command === "sidebar.searchProjects"),
+        [{ key: "mod+shift+p", command: "sidebar.searchProjects", when: "!terminalFocus" }],
+      );
+      assert.deepStrictEqual(
+        rules.filter((r) => r.command === "thread.pin"),
+        [{ key: "mod+alt+p", command: "thread.pin", when: "!terminalFocus" }],
+      );
+      assert.deepStrictEqual(
+        rules.filter((r) => r.command === "sideChat.previous"),
+        [{ key: "mod+shift+arrowleft", command: "sideChat.previous", when: "rightPanelFocus" }],
+      );
+      assert.deepStrictEqual(
+        rules.filter((r) => r.command === "sideChat.next"),
+        [{ key: "mod+alt+9", command: "sideChat.next" }],
+      );
+      yield* service.syncDefaultKeybindingsOnStartup;
+      assert.deepStrictEqual(yield* readKeybindingsConfig(keybindingsConfigPath), rules);
+    }).pipe(Effect.provide(layerKeybindings())),
+  );
+
   it.effect("leaves a customized command without the late default", () =>
     Effect.gen(function* () {
       const { keybindingsConfigPath } = yield* ServerConfig.ServerConfig;

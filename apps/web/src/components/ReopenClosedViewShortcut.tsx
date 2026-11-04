@@ -197,6 +197,7 @@ export function ReopenClosedViewShortcut() {
     const options = {
       context: {
         rightPanelOpen: true,
+        rightPanelFocus: true,
         previewFocus: true,
         previewOpen: true,
         terminalFocus: false,
