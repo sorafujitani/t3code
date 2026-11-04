@@ -159,6 +159,8 @@ export const DEFAULT_KEYBINDINGS: ReadonlyArray<KeybindingRule> = [
   { key: "mod+shift+b", command: "threadPanel.toggle", when: "!terminalFocus" },
   { key: "mod+t", command: "rightPanel.new", when: "rightPanelOpen && !terminalFocus" },
   { key: "mod+alt+t", command: "rightPanel.new", when: "rightPanelOpen && !terminalFocus" },
+  { key: "mod+arrowleft", command: "sideChat.previous", when: "rightPanelOpen && !terminalFocus" },
+  { key: "mod+arrowright", command: "sideChat.next", when: "rightPanelOpen && !terminalFocus" },
   { key: "mod+d", command: "terminal.split", when: "terminalFocus" },
   { key: "mod+shift+d", command: "terminal.splitVertical", when: "terminalFocus" },
   { key: "mod+n", command: "terminal.new", when: "terminalFocus" },
