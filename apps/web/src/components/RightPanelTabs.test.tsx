@@ -1,7 +1,8 @@
-import { EnvironmentId, type ThreadPullRequestLink } from "@t3tools/contracts";
+import { EnvironmentId, ThreadId, type ThreadPullRequestLink } from "@t3tools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
 import {
+  adjacentSideChat,
   resolvePullRequestTabLink,
   surfaceShortcutActionForKey,
   surfaceShortcutTargetsTypingContext,
@@ -165,5 +166,21 @@ describe("pull request tab snapshots", () => {
         link,
       ),
     ).toBe(newer);
+  });
+});
+
+describe("side chat tab navigation", () => {
+  it("skips other surfaces, wraps in both directions, and leaves other active tabs alone", () => {
+    const surfaces = [
+      { kind: "side-chat", id: "side-chat:a", threadId: ThreadId.make("a") },
+      { kind: "diff", id: "diff" },
+      { kind: "side-chat", id: "side-chat:b", threadId: ThreadId.make("b") },
+    ] as const;
+    expect(adjacentSideChat(surfaces, "side-chat:a", 1)).toBe(surfaces[2]);
+    expect(adjacentSideChat(surfaces, "side-chat:a", -1)).toBe(surfaces[2]);
+    expect(adjacentSideChat(surfaces, "side-chat:b", 1)).toBe(surfaces[0]);
+    expect(adjacentSideChat(surfaces, "side-chat:b", -1)).toBe(surfaces[0]);
+    expect(adjacentSideChat(surfaces, "diff", 1)).toBeUndefined();
+    expect(adjacentSideChat(surfaces.slice(0, 1), "side-chat:a", 1)).toBeUndefined();
   });
 });

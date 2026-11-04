@@ -1022,6 +1022,17 @@ function RightPanelTab(
   );
 }
 
+export function adjacentSideChat(
+  surfaces: readonly RightPanelSurface[],
+  activeSurfaceId: string | null,
+  direction: 1 | -1,
+) {
+  const sideChats = surfaces.filter((surface) => surface.kind === "side-chat");
+  const current = sideChats.findIndex((surface) => surface.id === activeSurfaceId);
+  if (current < 0 || sideChats.length < 2) return undefined;
+  return sideChats[(current + direction + sideChats.length) % sideChats.length];
+}
+
 export function RightPanelTabs(props: RightPanelTabsProps) {
   const focusedSurface = props.surfaces.find((surface) => surface.id === props.activeSurfaceId);
   const ownsDesktopTitleBar = isElectron && props.mode === "inline";
@@ -1041,12 +1052,23 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
 
   const onNewSurfaceKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (event.defaultPrevented || event.isComposing) return;
-    if (
-      resolveShortcutCommand(event, props.keybindings, {
-        context: { ...props.getShortcutContext(), rightPanelOpen: true },
-      }) !== "rightPanel.new"
-    )
+    const command = resolveShortcutCommand(event, props.keybindings, {
+      context: { ...props.getShortcutContext(), rightPanelOpen: true },
+    });
+    if (command === "sideChat.previous" || command === "sideChat.next") {
+      if (document.querySelector(LAUNCHER_SHORTCUT_BLOCKING_LAYERS)) return;
+      const target = adjacentSideChat(
+        props.surfaces,
+        props.activeSurfaceId,
+        command === "sideChat.next" ? 1 : -1,
+      );
+      if (!target) return;
+      event.preventDefault();
+      event.stopPropagation();
+      props.onActivate(target);
       return;
+    }
+    if (command !== "rightPanel.new") return;
     if (!addSurfaceMenuOpen && document.querySelector(LAUNCHER_SHORTCUT_BLOCKING_LAYERS)) return;
     event.preventDefault();
     event.stopPropagation();
