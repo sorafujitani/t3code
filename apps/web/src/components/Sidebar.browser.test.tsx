@@ -17,8 +17,10 @@ import type { Project } from "../types";
 import { ComposerPromptEditorTiptap } from "./ComposerPromptEditorTiptap";
 import Sidebar from "./Sidebar";
 import { SidebarProvider } from "./ui/sidebar";
+import { Popover, PopoverPopup, PopoverTrigger } from "./ui/popover";
 
 vi.mock("../state/entities", { spy: true });
+vi.mock("../env", () => ({ isElectron: true, isSecretsFeatureEnabled: false }));
 vi.mock("../hooks/useHandleNewThread", { spy: true });
 vi.mock("../hooks/useThreadRouteTarget", { spy: true });
 vi.mock("../commandPaletteBus", () => ({
@@ -96,87 +98,117 @@ describe("sidebar header new thread", () => {
   });
 });
 
-it("opens the top scoped thread and navigates from the focused composer", async () => {
-  using _platform = vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
-  using stack = new DisposableStack();
-  // The test router has no parameterized routes; derive the active thread from its location.
-  vi.mocked(useThreadRouteTarget).mockImplementation(function useRouteTarget() {
-    const pathname = useLocation({ select: (location) => location.pathname });
-    const [, environmentId, threadId] = pathname.split("/");
-    return resolveThreadRouteTarget({ environmentId, threadId });
-  });
-  stack.defer(() => vi.mocked(useThreadRouteTarget).mockReset());
-  const previousSettings = getClientSettings();
-  stack.defer(() => __setClientSettingsForTests(previousSettings));
-  __setClientSettingsForTests(DEFAULT_CLIENT_SETTINGS);
-  useUiStateStore.setState(useUiStateStore.getInitialState(), true);
-  const projects = [project("active"), project("idle")];
-  vi.mocked(useProjects).mockReturnValue(projects);
-  const threads = [
-    makeThreadFixture({
-      id: ThreadId.make("older"),
-      environmentId: EnvironmentId.make("local"),
-      projectId: ProjectId.make("idle"),
-      latestUserMessageAt: "2026-01-01T00:00:00.000Z",
-    }),
-    makeThreadFixture({
-      id: ThreadId.make("newer"),
-      environmentId: EnvironmentId.make("local"),
-      projectId: ProjectId.make("idle"),
-      latestUserMessageAt: "2026-01-02T00:00:00.000Z",
-    }),
-  ];
-  vi.mocked(useQuietThreadShells).mockReturnValue(threads);
-  stack.defer(() => vi.mocked(useQuietThreadShells).mockReset());
-  vi.mocked(useHandleNewThread).mockReturnValue({
-    activeDraftThread: null,
-    activeThread: null,
-    defaultProjectRef: null,
-    handleNewThread: vi.fn(),
-    routeDraftId: null,
-    routeThreadRef: null,
-  });
-  await using screen = await render(
-    <SidebarProvider>
-      <Sidebar routeReveal={{ observedKey: null, pendingKey: null }} />
-      <ComposerPromptEditorTiptap
-        editorRef={createRef()}
-        value="Draft message"
-        cursor={5}
-        contextRecords={new Map()}
-        skills={[]}
-        disabled={false}
-        placeholder="Message"
-        ariaLabel="Message"
-        onChange={() => {}}
-        onPaste={() => {}}
-      />
-    </SidebarProvider>,
-  );
-  await userEvent.click(screen.getByLabelText("Filter threads by project", { exact: true }));
-  await userEvent.click(page.getByRole("option", { name: /idle/ }));
-  await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/newer"));
-  await userEvent.click(screen.getByRole("textbox", { name: "Message" }));
-  const editor = screen.getByRole("textbox", { name: "Message" }).element();
-  for (const [key, threadId] of [
-    ["ArrowUp", "newer"],
-    ["ArrowDown", "older"],
-    ["ArrowDown", "older"],
-    ["ArrowUp", "newer"],
-  ] as const) {
-    editor.dispatchEvent(
-      new KeyboardEvent("keydown", {
-        key,
-        metaKey: true,
-        shiftKey: true,
-        bubbles: true,
-        cancelable: true,
+it.each([false, true])(
+  "navigates scoped threads with a retained PR popover: %s",
+  async (retainedPopover) => {
+    using _platform = vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
+    using stack = new DisposableStack();
+    // The test router has no parameterized routes; derive the active thread from its location.
+    vi.mocked(useThreadRouteTarget).mockImplementation(function useRouteTarget() {
+      const pathname = useLocation({ select: (location) => location.pathname });
+      const [, environmentId, threadId] = pathname.split("/");
+      return resolveThreadRouteTarget({ environmentId, threadId });
+    });
+    stack.defer(() => vi.mocked(useThreadRouteTarget).mockReset());
+    const previousSettings = getClientSettings();
+    stack.defer(() => __setClientSettingsForTests(previousSettings));
+    __setClientSettingsForTests(DEFAULT_CLIENT_SETTINGS);
+    useUiStateStore.setState(useUiStateStore.getInitialState(), true);
+    const projects = [project("active"), project("idle")];
+    vi.mocked(useProjects).mockReturnValue(projects);
+    const threads = [
+      makeThreadFixture({
+        id: ThreadId.make("older"),
+        environmentId: EnvironmentId.make("local"),
+        projectId: ProjectId.make("idle"),
+        latestUserMessageAt: "2026-01-01T00:00:00.000Z",
       }),
+      makeThreadFixture({
+        id: ThreadId.make("newer"),
+        environmentId: EnvironmentId.make("local"),
+        projectId: ProjectId.make("idle"),
+        latestUserMessageAt: "2026-01-02T00:00:00.000Z",
+      }),
+    ];
+    vi.mocked(useQuietThreadShells).mockReturnValue(threads);
+    stack.defer(() => vi.mocked(useQuietThreadShells).mockReset());
+    vi.mocked(useHandleNewThread).mockReturnValue({
+      activeDraftThread: null,
+      activeThread: null,
+      defaultProjectRef: null,
+      handleNewThread: vi.fn(),
+      routeDraftId: null,
+      routeThreadRef: null,
+    });
+    await using screen = await render(
+      <SidebarProvider>
+        <Sidebar routeReveal={{ observedKey: null, pendingKey: null }} />
+        {retainedPopover && (
+          <Popover>
+            <PopoverTrigger>Comment on PR</PopoverTrigger>
+            <PopoverPopup keepMounted aria-label="PR comment">
+              <textarea aria-label="Review comment" />
+            </PopoverPopup>
+          </Popover>
+        )}
+        <ComposerPromptEditorTiptap
+          editorRef={createRef()}
+          value="Draft message"
+          cursor={5}
+          contextRecords={new Map()}
+          skills={[]}
+          disabled={false}
+          placeholder="Message"
+          ariaLabel="Message"
+          onChange={() => {}}
+          onPaste={() => {}}
+        />
+      </SidebarProvider>,
     );
-    await vi.waitFor(() =>
-      expect(screen.router?.state.location.pathname).toBe(`/local/${threadId}`),
-    );
-    expect(document.activeElement).toBe(editor);
-    expect(window.getSelection()?.isCollapsed).toBe(true);
-  }
-});
+    await userEvent.click(screen.getByLabelText("Filter threads by project", { exact: true }));
+    await userEvent.click(page.getByRole("option", { name: /idle/ }));
+    await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/newer"));
+    await userEvent.click(screen.getByRole("textbox", { name: "Message" }));
+    const editor = screen.getByRole("textbox", { name: "Message" }).element();
+    for (const [key, threadId] of [
+      ["ArrowUp", "newer"],
+      ["ArrowDown", "older"],
+      ["ArrowDown", "older"],
+      ["ArrowUp", "newer"],
+      ["ArrowDown", "older"],
+      ["1", "newer"],
+    ] as const) {
+      editor.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key,
+          code: key === "1" ? "Digit1" : key,
+          metaKey: true,
+          shiftKey: key !== "1",
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+      await vi.waitFor(() =>
+        expect(screen.router?.state.location.pathname).toBe(`/local/${threadId}`),
+      );
+      expect(document.activeElement).toBe(editor);
+      expect(window.getSelection()?.isCollapsed).toBe(true);
+    }
+    if (retainedPopover) {
+      await screen.router!.navigate({
+        to: "/$environmentId/$threadId",
+        params: { environmentId: "local", threadId: "older" },
+      });
+      await userEvent.click(screen.getByRole("button", { name: "Comment on PR" }));
+      await expect.element(page.getByRole("dialog", { name: "PR comment" })).toBeVisible();
+      const popup = page.getByRole("dialog", { name: "PR comment" }).element();
+      await userEvent.keyboard("{Meta>}{Shift>}{ArrowUp}{/Shift}1{/Meta}");
+      expect(screen.router?.state.location.pathname).toBe("/local/older");
+      await userEvent.keyboard("{Escape}");
+      await expect.element(popup).not.toBeVisible();
+      expect(popup.isConnected).toBe(true);
+      await userEvent.keyboard("{Meta>}1{/Meta}");
+      await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/newer"));
+    }
+  },
+);

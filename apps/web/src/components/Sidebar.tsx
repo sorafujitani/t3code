@@ -2932,7 +2932,13 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       const traversalDirection = threadTraversalDirectionFromCommand(command);
       const jumpIndex = threadJumpIndexFromCommand(command ?? "");
       if (traversalDirection === null && jumpIndex === null) return;
-      if (document.querySelector('[role="dialog"], [role="alertdialog"], [data-slot="menu-popup"]'))
+      if (
+        Array.from(
+          document.querySelectorAll(
+            '[role="dialog"], [role="alertdialog"], [data-slot="menu-popup"]',
+          ),
+        ).some((layer) => layer.checkVisibility({ visibilityProperty: true }))
+      )
         return;
       const navigateToThreadKey = (targetThreadKey: string | null) => {
         if (!targetThreadKey) return false;
