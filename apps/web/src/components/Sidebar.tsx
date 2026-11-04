@@ -926,7 +926,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
   } = useSidebarLookups();
   const delegatedUnderParent = useDelegatedUnderParent();
   const router = useRouter();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpen, setOpenMobile } = useSidebar();
   const keybindings = useAtomValue(primaryServerKeybindingsAtom);
   const confirmThreadDelete = useClientSettings((s) => s.confirmThreadDelete);
   const confirmThreadArchive = useClientSettings((s) => s.confirmThreadArchive);
@@ -2900,6 +2900,15 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
           isDesktop: isElectron,
         },
       });
+      if (command === "sidebar.searchProjects") {
+        event.preventDefault();
+        event.stopPropagation();
+        setOpen(true);
+        if (isMobile) setOpenMobile(true);
+        suppressNextScopeChangeRef.current = false;
+        dispatchProjectScopeMenu({ type: "open-changed", open: true });
+        return;
+      }
       const navigateToThreadKey = (targetThreadKey: string | null) => {
         if (!targetThreadKey) return false;
         const targetThread = threadByKey.get(targetThreadKey);
@@ -2928,6 +2937,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     return () => window.removeEventListener("keydown", onWindowKeyDown);
   }, [
     keybindings,
+    isMobile,
+    setOpen,
+    setOpenMobile,
     navigateToThread,
     orderedThreadKeys,
     routeRowThreadKey,
