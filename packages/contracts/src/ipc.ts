@@ -1212,6 +1212,7 @@ export type ConfirmDialogVariant = "default" | "destructive";
 
 export interface ConfirmDialogOptions {
   readonly variant?: ConfirmDialogVariant;
+  readonly initialFocus?: "cancel" | "confirm";
 }
 
 export interface LocalApi {
