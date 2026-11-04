@@ -63,14 +63,13 @@ export function useSideChat(input: {
     const text = prompt?.trim();
     // Send before showing the tab: closing a tab whose side chat has no run deletes it.
     if (text) {
-      // The server asks before edits on a side chat's first turn whatever mode is sent.
       const turn = await startThreadTurn({
         environmentId: threadRef.environmentId,
         input: {
           threadId: targetThreadId,
           message: { messageId: newMessageId(), role: "user", text, attachments: [] },
           titleSeed: deriveThreadTitleSeed({ text, attachments: [] }),
-          runtimeMode: "approval-required",
+          runtimeMode: "full-access",
           interactionMode: "default",
           createdAt: new Date().toISOString(),
         },
