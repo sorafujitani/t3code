@@ -36,6 +36,27 @@ function event(overrides: Partial<ShortcutEventLike> = {}): ShortcutEventLike {
   };
 }
 
+it.each([
+  ["ArrowUp", "thread.previous", "modelPicker.previousProvider"],
+  ["ArrowDown", "thread.next", "modelPicker.nextProvider"],
+] as const)(
+  "navigates threads with Shift+Command+%s outside the model picker",
+  (key, command, pickerCommand) => {
+    const chord = event({ key, metaKey: true, shiftKey: true });
+    assert.equal(
+      resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, { platform: "MacIntel" }),
+      command,
+    );
+    assert.equal(
+      resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, {
+        platform: "MacIntel",
+        context: { modelPickerOpen: true },
+      }),
+      pickerCommand,
+    );
+  },
+);
+
 it("resolves shifted project search and limits shifted panel navigation to panel focus", () => {
   const options = { platform: "MacIntel" };
   assert.equal(
