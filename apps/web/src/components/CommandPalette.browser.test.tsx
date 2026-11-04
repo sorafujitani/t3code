@@ -5,6 +5,8 @@ import { page } from "vite-plus/test/browser";
 import { render } from "../../test/render";
 import { openCommandPalette } from "../commandPaletteBus";
 import { useCommandPaletteStore } from "../commandPaletteStore";
+import { useUiStateStore } from "../uiStateStore";
+import { getProjectOrderKey } from "@t3tools/client-runtime/state/project-grouping";
 import { makeThreadFixture } from "../test-fixtures";
 import type { Project, Thread } from "../types";
 import { CommandPalette } from "./CommandPalette";
@@ -20,6 +22,7 @@ vi.mock("../state/entities", async (original) => ({
 }));
 
 function setup(state: { projects?: ReadonlyArray<Project>; threads?: ReadonlyArray<Thread> } = {}) {
+  useUiStateStore.setState(useUiStateStore.getInitialState(), true);
   useCommandPaletteStore.setState(useCommandPaletteStore.getInitialState(), true);
   entities.projects = state.projects ?? [];
   entities.threads = state.threads ?? [];
@@ -90,5 +93,8 @@ describe("CommandPalette open intents", () => {
     await page.getByRole("option", { name: /Acme/ }).first().click();
 
     await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/parent"));
+    expect(useUiStateStore.getState().sidebarProjectScopeKeys).toEqual([
+      getProjectOrderKey(entities.projects[0]!),
+    ]);
   });
 });
