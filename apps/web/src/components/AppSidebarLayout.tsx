@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useLocation, useRouter, type AnyRouter } from "@tanstack/react-router";
 
-import { moveWorkspaceFocus, workspaceAreaProps } from "../lib/workspaceFocus";
+import { focusChatComposer, moveWorkspaceFocus, workspaceAreaProps } from "../lib/workspaceFocus";
 import { isCommandPaletteOpen } from "../commandPaletteBus";
 import { isElectron } from "../env";
 import {
@@ -180,9 +180,19 @@ function registerWorkspaceFocusCommands(router: AnyRouter): () => void {
     event.stopPropagation();
     moveWorkspaceFocus(direction);
   };
+  const focusChat = (sideChat: boolean) => (event: KeyboardEvent) => {
+    if (event.isComposing || !focusChatComposer(sideChat)) return false;
+    event.preventDefault();
+    event.stopPropagation();
+  };
   const disposers = [
     registerCommands(
-      { "workspace.focusNext": move(1), "workspace.focusPrevious": move(-1) },
+      {
+        "workspace.focusNext": move(1),
+        "workspace.focusPrevious": move(-1),
+        "chat.focusMain": focusChat(false),
+        "chat.focusSide": focusChat(true),
+      },
       {
         capture: true,
         when: (event) => !isKeybindingCaptureTarget(event),
