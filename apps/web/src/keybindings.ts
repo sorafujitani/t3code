@@ -60,6 +60,9 @@ function resolvePlatform(options: ShortcutMatchOptions | undefined): string {
 
 function resolveContext(options: ShortcutMatchOptions | undefined): ShortcutMatchContext {
   return {
+    rightPanelFocus:
+      typeof document !== "undefined" &&
+      Boolean(document.activeElement?.closest('[data-workspace-area="panel"]')),
     terminalFocus: false,
     terminalOpen: false,
     previewFocus: false,

@@ -36,6 +36,45 @@ function event(overrides: Partial<ShortcutEventLike> = {}): ShortcutEventLike {
   };
 }
 
+it("resolves shifted project search and limits shifted panel navigation to panel focus", () => {
+  const options = { platform: "MacIntel" };
+  assert.equal(
+    resolveShortcutCommand(
+      event({ key: "p", metaKey: true, shiftKey: true }),
+      DEFAULT_RESOLVED_KEYBINDINGS,
+      options,
+    ),
+    "sidebar.searchProjects",
+  );
+  for (const [key, command] of [
+    ["ArrowLeft", "sideChat.previous"],
+    ["ArrowRight", "sideChat.next"],
+  ] as const) {
+    const chord = event({ key, metaKey: true, shiftKey: true });
+    assert.equal(
+      resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, {
+        ...options,
+        context: { rightPanelOpen: true, rightPanelFocus: false },
+      }),
+      null,
+    );
+    assert.equal(
+      resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, {
+        ...options,
+        context: { rightPanelFocus: true, terminalFocus: true },
+      }),
+      command,
+    );
+    assert.equal(
+      resolveShortcutCommand(event({ key, metaKey: true }), DEFAULT_RESOLVED_KEYBINDINGS, {
+        ...options,
+        context: { rightPanelFocus: true },
+      }),
+      null,
+    );
+  }
+});
+
 describe("terminal word navigation", () => {
   it.each(["Win32", "Linux x86_64"])(
     "leaves Ctrl+Arrow to the terminal encoder on %s",

@@ -146,7 +146,7 @@ type WhenToken =
 
 export const DEFAULT_KEYBINDINGS: ReadonlyArray<KeybindingRule> = [
   { key: "mod+b", command: "sidebar.toggle" },
-  { key: "mod+alt+p", command: "sidebar.searchProjects", when: "!terminalFocus" },
+  { key: "mod+shift+p", command: "sidebar.searchProjects", when: "!terminalFocus" },
   { key: "mod+alt+arrowleft", command: "chat.focusMain", when: "!terminalFocus" },
   { key: "mod+alt+arrowright", command: "chat.focusSide", when: "!terminalFocus" },
   { key: "f6", command: "workspace.focusNext" },
@@ -161,8 +161,8 @@ export const DEFAULT_KEYBINDINGS: ReadonlyArray<KeybindingRule> = [
   { key: "mod+shift+b", command: "threadPanel.toggle", when: "!terminalFocus" },
   { key: "mod+t", command: "rightPanel.new", when: "rightPanelOpen && !terminalFocus" },
   { key: "mod+alt+t", command: "rightPanel.new", when: "rightPanelOpen && !terminalFocus" },
-  { key: "mod+arrowleft", command: "sideChat.previous", when: "rightPanelOpen && !terminalFocus" },
-  { key: "mod+arrowright", command: "sideChat.next", when: "rightPanelOpen && !terminalFocus" },
+  { key: "mod+shift+arrowleft", command: "sideChat.previous", when: "rightPanelFocus" },
+  { key: "mod+shift+arrowright", command: "sideChat.next", when: "rightPanelFocus" },
   { key: "mod+d", command: "terminal.split", when: "terminalFocus" },
   { key: "mod+shift+d", command: "terminal.splitVertical", when: "terminalFocus" },
   { key: "mod+n", command: "terminal.new", when: "terminalFocus" },
@@ -223,7 +223,7 @@ export const DEFAULT_KEYBINDINGS: ReadonlyArray<KeybindingRule> = [
   { key: "mod+shift+]", command: "thread.next" },
   { key: "mod+shift+c", command: "thread.copyReference", when: "!terminalFocus" },
   { key: "mod+shift+s", command: "thread.settle", when: "!terminalFocus" },
-  { key: "mod+shift+p", command: "thread.pin", when: "!terminalFocus" },
+  { key: "mod+alt+p", command: "thread.pin", when: "!terminalFocus" },
   { key: "mod+z", command: "thread.undo", when: "!terminalFocus && !editableFocus" },
   ...THREAD_JUMP_KEYBINDING_COMMANDS.map((command, index) => ({
     key: `mod+${index + 1}`,

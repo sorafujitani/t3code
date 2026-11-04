@@ -1076,6 +1076,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
       return;
     }
     if (command === "sideChat.previous" || command === "sideChat.next") {
+      if (!document.activeElement?.closest('[data-workspace-area="panel"]')) return;
       if (!movePanelTab(command === "sideChat.next" ? 1 : -1)) return;
       event.preventDefault();
       event.stopPropagation();

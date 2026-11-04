@@ -114,8 +114,30 @@ it.each([
     const mod = navigator.platform.toLowerCase().includes("mac")
       ? { metaKey: true }
       : { ctrlKey: true };
+    editor.blur();
+    document.body.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        ...mod,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(onActivate).not.toHaveBeenCalled();
+    editor.focus();
     editor.dispatchEvent(
       new KeyboardEvent("keydown", {
+        key: "ArrowRight",
+        ...mod,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    expect(onActivate).not.toHaveBeenCalled();
+    editor.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        shiftKey: true,
         key: "ArrowRight",
         code: "ArrowRight",
         ...mod,
