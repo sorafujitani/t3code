@@ -1057,11 +1057,22 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
     props.onActivate(target);
     return true;
   });
-  const onNewSurfaceKeyDown = useEffectEvent((event: KeyboardEvent) => {
+  const closePanelTab = useEffectEvent((repeat = false) => {
+    if (!focusedSurface || document.querySelector(LAUNCHER_SHORTCUT_BLOCKING_LAYERS)) return false;
+    if (!repeat) props.onCloseSurface(focusedSurface);
+    return true;
+  });
+  const onPanelKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (event.defaultPrevented || event.isComposing) return;
     const command = resolveShortcutCommand(event, props.keybindings, {
       context: { ...props.getShortcutContext(), rightPanelOpen: true },
     });
+    if (command === "rightPanel.close") {
+      if (!closePanelTab(event.repeat)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
     if (command === "sideChat.previous" || command === "sideChat.next") {
       if (!movePanelTab(command === "sideChat.next" ? 1 : -1)) return;
       event.preventDefault();
@@ -1077,16 +1088,18 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
       setAddSurfaceMenuOpen(true);
     }
   });
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- subscribes a document keydown listener for the new surface shortcut while the panel is open
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- subscribes a document keydown listener for panel shortcuts while the panel is open
   useEffect(() => {
     if (props.open === false) return;
-    document.addEventListener("keydown", onNewSurfaceKeyDown, true);
+    document.addEventListener("keydown", onPanelKeyDown, true);
+    const close = registerMenuAction("rightPanel.close", () => closePanelTab());
     const previous = registerMenuAction("sideChat.previous", () => movePanelTab(-1));
     const next = registerMenuAction("sideChat.next", () => movePanelTab(1));
     return () => {
-      document.removeEventListener("keydown", onNewSurfaceKeyDown, true);
+      document.removeEventListener("keydown", onPanelKeyDown, true);
       previous();
       next();
+      close();
     };
   }, [props.open]);
 

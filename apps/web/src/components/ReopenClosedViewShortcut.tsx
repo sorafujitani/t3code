@@ -50,6 +50,7 @@ const PREVIEW_FORWARDED_COMMANDS = [
   "sideChat.next",
   "sidebar.toggle",
   "rightPanel.toggle",
+  "rightPanel.close",
   "rightPanel.toggleMaximized",
   "preview.focusUrl",
 ] as const;
