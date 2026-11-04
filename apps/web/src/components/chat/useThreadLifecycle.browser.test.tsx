@@ -2,7 +2,7 @@ import * as Cause from "effect/Cause";
 import { scopedThreadKey, scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { EnvironmentId, ThreadId } from "@t3tools/contracts";
 import { expect, it, vi } from "vite-plus/test";
-import { page } from "vite-plus/test/browser";
+import { page, userEvent } from "vite-plus/test/browser";
 
 const state = vi.hoisted(() => ({
   deleteThread: (async () => ({ _tag: "Success" })) as (input: unknown) => Promise<unknown>,
@@ -36,6 +36,7 @@ vi.mock(import("../../state/entities"), async (importOriginal) => ({
   useChildThreadInputs: (() => []) as never,
 }));
 
+import { ConfirmDialogHost } from "../ConfirmDialogHost";
 import { readLocalApi } from "../../localApi";
 
 import { render } from "../../../test/render";
@@ -280,5 +281,33 @@ it.each([false, true, "failure"] as const)(
     await confirmation.catch(() => false);
     await vi.waitFor(() => expect(remove).toHaveBeenCalledTimes(answer === true ? 1 : 0));
     if (answer === true) expect(remove).toHaveBeenCalledWith(thread.activeThreadRef);
+  },
+);
+
+it.each(["Enter", "Escape"])(
+  "handles %s after opening thread deletion from the shortcut",
+  async (key) => {
+    setup();
+    const remove = vi.fn(async () => ({ _tag: "Success" }));
+    state.deleteThread = remove;
+    const thread = threadInput("thread:delete-enter", "main");
+    await using screen = await render(
+      <>
+        <ConfirmDialogHost />
+        <RestoreBranchHarness
+          thread={thread}
+          currentRouteThreadKeyRef={{ current: thread.routeThreadKey }}
+          refreshGitStatus={() => {}}
+          focusComposer={() => {}}
+        />
+      </>,
+    );
+    await screen.getByRole("button", { name: "Delete shortcut" }).click();
+    await expect.element(page.getByRole("button", { name: "Confirm", exact: true })).toHaveFocus();
+    expect(remove).not.toHaveBeenCalled();
+    await userEvent.keyboard(`{${key}}`);
+    await expect.element(page.getByRole("alertdialog")).not.toBeInTheDocument();
+    expect(remove).toHaveBeenCalledTimes(key === "Enter" ? 1 : 0);
+    if (key === "Enter") expect(remove).toHaveBeenCalledWith(thread.activeThreadRef);
   },
 );

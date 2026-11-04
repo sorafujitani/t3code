@@ -668,7 +668,7 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
           const confirmed = await settlePromise(() =>
             api.dialogs.confirm(
               `Delete thread "${activeThreadShell.title}"?\nThis permanently clears conversation history for this thread.`,
-              { variant: "destructive" },
+              { variant: "destructive", initialFocus: "confirm" },
             ),
           );
           if (confirmed._tag === "Failure" || !confirmed.value) return;

@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
 
 import {
   completeConfirmDialogClose,
@@ -51,6 +51,8 @@ function resolveConfirmDialogCopy(message: string): ConfirmationCopy {
 }
 
 export function ConfirmDialogHost() {
+  const confirmRef = useRef<HTMLButtonElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
   const state = useSyncExternalStore(
     subscribeConfirmDialogHost,
     readConfirmDialogState,
@@ -72,7 +74,11 @@ export function ConfirmDialogHost() {
         if (!open) completeConfirmDialogClose();
       }}
     >
-      <AlertDialogPopup>
+      <AlertDialogPopup
+        initialFocus={
+          state.status !== "idle" && state.initialFocus === "confirm" ? confirmRef : cancelRef
+        }
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>{copy.title}</AlertDialogTitle>
           {copy.description ? (
@@ -82,8 +88,10 @@ export function ConfirmDialogHost() {
           ) : null}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogClose render={<Button variant="outline" />}>Cancel</AlertDialogClose>
-          <Button variant={confirmVariant} onClick={onConfirm}>
+          <AlertDialogClose ref={cancelRef} render={<Button variant="outline" />}>
+            Cancel
+          </AlertDialogClose>
+          <Button ref={confirmRef} variant={confirmVariant} onClick={onConfirm}>
             Confirm
           </Button>
         </AlertDialogFooter>
