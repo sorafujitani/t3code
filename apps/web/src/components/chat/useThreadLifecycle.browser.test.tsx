@@ -5,6 +5,7 @@ import { expect, it, vi } from "vite-plus/test";
 import { page } from "vite-plus/test/browser";
 
 const state = vi.hoisted(() => ({
+  deleteThread: (async () => ({ _tag: "Success" })) as (input: unknown) => Promise<unknown>,
   switchRef: (async () => undefined) as (input: unknown) => Promise<unknown>,
 }));
 
@@ -26,7 +27,7 @@ vi.mock(import("../../state/use-orchestration-command"), async (importOriginal) 
 
 vi.mock(import("../../hooks/useThreadActions"), async (importOriginal) => ({
   ...(await importOriginal()),
-  useThreadActions: (() => ({})) as never,
+  useThreadActions: (() => ({ deleteThread: state.deleteThread })) as never,
   useAcknowledgeThreadWoke: (() => () => undefined) as never,
 }));
 
@@ -35,18 +36,27 @@ vi.mock(import("../../state/entities"), async (importOriginal) => ({
   useChildThreadInputs: (() => []) as never,
 }));
 
+import { readLocalApi } from "../../localApi";
+
 import { render } from "../../../test/render";
 import { useThreadLifecycle } from "./useThreadLifecycle";
 
 const environmentId = EnvironmentId.make("environment:test");
 
 function setup() {
+  state.deleteThread = async () => ({ _tag: "Success" });
   state.switchRef = async () => undefined;
 }
 
 function threadInput(threadId: string, branch: string) {
   const ref = scopeThreadRef(environmentId, ThreadId.make(threadId));
-  const thread = { id: ref.threadId, environmentId, branch, worktreePath: null };
+  const thread = {
+    title: "Test thread",
+    id: ref.threadId,
+    environmentId,
+    branch,
+    worktreePath: null,
+  };
   return {
     routeThreadKey: scopedThreadKey(ref),
     activeThread: thread as never,
@@ -72,7 +82,7 @@ function RestoreBranchHarness(props: {
     currentRouteThreadKeyRef: props.currentRouteThreadKeyRef,
     canOperateThread: true,
     clientSettingsHydrated: true,
-    activeThreadShell: null,
+    activeThreadShell: props.thread.activeThread as never,
     activeLatestRun: null as never,
     activeProjectCwd: "/repo",
     serverConfig: null,
@@ -98,6 +108,16 @@ function RestoreBranchHarness(props: {
   return (
     <>
       {lifecycle.workNow?.actions}
+      <button
+        onClick={() =>
+          lifecycle.shortcuts["thread.delete"]({
+            event: new KeyboardEvent("keydown"),
+            terminalFocusOwner: null,
+          })
+        }
+      >
+        Delete shortcut
+      </button>
       <button
         type="button"
         disabled={lifecycle.isRestoringThreadBranch}
@@ -224,5 +244,41 @@ it.each(["Success", "Failure"] as const)(
     await expect.element(page.getByRole("button", { name: "Stopping..." })).toBeDisabled();
     expect(state.switchRef).toHaveBeenCalledTimes(2);
     completions[1]!({ _tag: "Success", value: undefined });
+  },
+);
+
+it.each([false, true, "failure"] as const)(
+  "requires confirmation before deleting a thread: %s",
+  async (answer) => {
+    setup();
+    let resolveConfirmation!: (answer: boolean) => void;
+    let rejectConfirmation!: (error: Error) => void;
+    const confirmation = new Promise<boolean>((resolve, reject) => {
+      resolveConfirmation = resolve;
+      rejectConfirmation = reject;
+    });
+    const remove = vi.fn(async () => ({ _tag: "Success" }));
+
+    state.deleteThread = remove;
+    const thread = threadInput("thread:delete", "main");
+    await using screen = await render(
+      <RestoreBranchHarness
+        thread={thread}
+        currentRouteThreadKeyRef={{ current: thread.routeThreadKey }}
+        refreshGitStatus={() => {}}
+        focusComposer={() => {}}
+      />,
+    );
+    using confirm = vi.spyOn(readLocalApi()!.dialogs, "confirm").mockReturnValue(confirmation);
+    await screen.getByRole("button", { name: "Delete shortcut" }).click();
+    await screen.getByRole("button", { name: "Delete shortcut" }).click();
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(confirm.mock.calls[0]?.[0]).toContain("Test thread");
+    expect(remove).not.toHaveBeenCalled();
+    if (answer === "failure") rejectConfirmation(new Error("Confirmation unavailable"));
+    else resolveConfirmation(answer);
+    await confirmation.catch(() => false);
+    await vi.waitFor(() => expect(remove).toHaveBeenCalledTimes(answer === true ? 1 : 0));
+    if (answer === true) expect(remove).toHaveBeenCalledWith(thread.activeThreadRef);
   },
 );

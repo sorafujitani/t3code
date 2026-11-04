@@ -11,6 +11,7 @@ import {
   chatActionErrorMessage,
   makeThreadErrorSetter,
 } from "../ChatView.logic";
+import { readLocalApi } from "../../localApi";
 import { useStableCallback } from "../../hooks/useStableCallback";
 import { useDeadlinePassed, useNowAfter } from "../../hooks/useDeadline";
 import type { usePendingThreadRequests } from "./usePendingThreadRequests";
@@ -42,6 +43,7 @@ import { type SetStateAction, useRef, useState } from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import {
   isAtomCommandInterrupted,
+  settlePromise,
   squashAtomCommandFailure,
   type AtomCommandResult,
 } from "@t3tools/client-runtime/state/runtime";
@@ -174,7 +176,7 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
   } = input;
   const navigate = useNavigate();
   const router = useRouter();
-  const { settleThread, pinThread, confirmAndUnpinThread } = useThreadActions();
+  const { settleThread, pinThread, confirmAndUnpinThread, deleteThread } = useThreadActions();
   const canWriteSourceControl = useEnvironmentScope(environmentId, AuthSourceControlWriteScope);
   const switchGitRef = useAtomCommand(vcsEnvironment.switchRef, { reportFailure: false });
   const updateThreadMetadata = useOrchestrationCommand(threadEnvironment.updateMetadata, {
@@ -647,7 +649,44 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
         }),
       );
     };
+  const deletePendingRef = useRef(false);
   const shortcuts = {
+    "thread.delete": ({ event }) => {
+      if (!readEnvironmentScope(environmentId, AuthOrchestrationOperateScope)) return false;
+      if (!activeThreadShell || !activeThreadRef) return false;
+      if (
+        event.isComposing ||
+        document.querySelector('[role="dialog"], [role="alertdialog"], [data-slot="menu-popup"]')
+      )
+        return false;
+      if (event.repeat || deletePendingRef.current) return;
+      const api = readLocalApi();
+      if (!api) return false;
+      deletePendingRef.current = true;
+      void (async () => {
+        try {
+          const confirmed = await settlePromise(() =>
+            api.dialogs.confirm(
+              `Delete thread "${activeThreadShell.title}"?\nThis permanently clears conversation history for this thread.`,
+              { variant: "destructive" },
+            ),
+          );
+          if (confirmed._tag === "Failure" || !confirmed.value) return;
+          const result = await deleteThread(activeThreadRef);
+          toastThreadActionFailure("Failed to delete thread")(result);
+        } catch (error) {
+          toastManager.add(
+            stackedThreadToast({
+              type: "error",
+              title: "Failed to delete thread",
+              description: error instanceof Error ? error.message : "An error occurred.",
+            }),
+          );
+        }
+      })().finally(() => {
+        deletePendingRef.current = false;
+      });
+    },
     "thread.settle": () => {
       if (!readEnvironmentScope(environmentId, AuthOrchestrationOperateScope)) return false;
       if (!activeThreadShell || !activeThreadRef || !serverConfigLoaded) return;
