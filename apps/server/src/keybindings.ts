@@ -100,6 +100,15 @@ const LATE_DEFAULT_KEYBINDINGS: ReadonlyArray<{
   readonly rule: KeybindingRule;
 }> = [
   {
+    id: "rightPanel.new:mod+alt+t",
+    alongside: {
+      key: "mod+t",
+      command: "rightPanel.new",
+      when: "rightPanelOpen && !terminalFocus",
+    },
+    rule: { key: "mod+alt+t", command: "rightPanel.new", when: "rightPanelOpen && !terminalFocus" },
+  },
+  {
     id: "composer.sendBackground:mod+enter",
     alongside: {
       key: "mod+alt+enter",
