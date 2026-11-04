@@ -322,6 +322,7 @@ export function DeviceStreamView(props: {
         )}
         tabIndex={0}
         role="application"
+        data-panel-focus-default
         aria-label={`${props.platform === "ios" ? "iOS Simulator" : "Android Emulator"} screen`}
         onKeyDown={(event) => {
           if (event.target !== event.currentTarget) return;

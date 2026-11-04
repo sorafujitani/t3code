@@ -421,12 +421,15 @@ export function PullRequestDetailPanel({
   // Fresh ref callbacks would detach and reattach every scroller on each render.
   const [scrollerRefs] = useState(() => ({
     summary: (node: HTMLElement | null) => {
+      node?.setAttribute("data-panel-focus-default", "");
       scrollerByTab.current.summary = node;
     },
     timeline: (node: HTMLElement | null) => {
+      node?.setAttribute("data-panel-focus-default", "");
       scrollerByTab.current.timeline = node;
     },
     code: (node: HTMLElement | null) => {
+      node?.setAttribute("data-panel-focus-default", "");
       scrollerByTab.current.code = node;
     },
   }));

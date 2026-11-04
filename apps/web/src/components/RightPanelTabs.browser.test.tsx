@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { startWorkspaceFocus } from "../lib/workspaceFocus";
 import { ThreadId } from "@t3tools/contracts";
 import { DEFAULT_RESOLVED_KEYBINDINGS } from "@t3tools/shared/keybindings";
 import { expect, it, vi } from "vite-plus/test";
@@ -38,56 +40,76 @@ it.each([
       surface,
       { kind: "side-chat", id: "side-chat:b", threadId: ThreadId.make("b") },
     ] as const;
-    await using screen = await render(
-      <RightPanelTabs
-        mode="inline"
-        open
-        keybindings={DEFAULT_RESOLVED_KEYBINDINGS}
-        getShortcutContext={() => ({
-          terminalFocus: false,
-          terminalOpen: false,
-          previewFocus: false,
-          previewOpen: false,
-          isWeb: true,
-          isDesktop: false,
-        })}
-        surfaces={surfaces}
-        environmentId={null}
-        activeSurfaceId={surface.id}
-        pendingSurfaceIds={new Set()}
-        previewSessions={{}}
-        desktopByTabId={{}}
-        terminalLabelsById={new Map()}
-        onActivate={onActivate}
-        onCloseSurface={onClose}
-        onCloseOtherSurfaces={noop}
-        onCloseSurfacesToRight={noop}
-        onCloseAllSurfaces={noop}
-        onCopyFilePath={noop}
-        onAddBrowser={noop}
-        onAddBrowserInProfile={noop}
-        onAddTerminal={noop}
-        onAddDiff={noop}
-        onAddFiles={noop}
-        onAddPullRequest={noop}
-        onAddPullRequests={noop}
-        onAddDevice={noop}
-        onAddSideChat={noop}
-        browserAvailable={false}
-        terminalAvailable
-        diffAvailable
-        filesAvailable
-        pullRequestAvailable
-        pullRequestsAvailable
-        deviceAvailable={false}
-        sideChatAvailable
-      >
-        <div data-side-chat-pane>
-          <textarea aria-label="Side input" />
-        </div>
-      </RightPanelTabs>,
-    );
-    const editor = screen.getByRole("textbox", { name: "Side input" }).element();
+    function Panel() {
+      const [active, setActive] = useState<RightPanelSurface>(surface);
+      return (
+        <RightPanelTabs
+          mode="inline"
+          open
+          keybindings={DEFAULT_RESOLVED_KEYBINDINGS}
+          getShortcutContext={() => ({
+            terminalFocus: false,
+            terminalOpen: false,
+            previewFocus: false,
+            previewOpen: false,
+            isWeb: true,
+            isDesktop: false,
+          })}
+          surfaces={surfaces}
+          environmentId={null}
+          activeSurfaceId={active.id}
+          pendingSurfaceIds={new Set()}
+          previewSessions={{}}
+          desktopByTabId={{}}
+          terminalLabelsById={new Map()}
+          onActivate={(next) => {
+            onActivate(next);
+            setActive(next);
+          }}
+          onCloseSurface={onClose}
+          onCloseOtherSurfaces={noop}
+          onCloseSurfacesToRight={noop}
+          onCloseAllSurfaces={noop}
+          onCopyFilePath={noop}
+          onAddBrowser={noop}
+          onAddBrowserInProfile={noop}
+          onAddTerminal={noop}
+          onAddDiff={noop}
+          onAddFiles={noop}
+          onAddPullRequest={noop}
+          onAddPullRequests={noop}
+          onAddDevice={noop}
+          onAddSideChat={noop}
+          browserAvailable={false}
+          terminalAvailable
+          diffAvailable
+          filesAvailable
+          pullRequestAvailable
+          pullRequestsAvailable
+          deviceAvailable={false}
+          sideChatAvailable
+        >
+          <div data-side-chat-pane key={active.id}>
+            <button>Bring back</button>
+            <div data-workspace-area="composer">
+              <div
+                role="textbox"
+                aria-label="Side input"
+                data-testid="composer-editor"
+                contentEditable
+                suppressContentEditableWarning
+              >
+                Draft
+              </div>
+            </div>
+          </div>
+        </RightPanelTabs>
+      );
+    }
+    await using screen = await render(<Panel />);
+    using cleanup = new DisposableStack();
+    cleanup.defer(startWorkspaceFocus(screen.router!));
+    let editor = screen.getByRole("textbox", { name: "Side input" }).element();
     editor.focus();
     const mod = navigator.platform.toLowerCase().includes("mac")
       ? { metaKey: true }
@@ -102,6 +124,8 @@ it.each([
       }),
     );
     expect(onActivate).toHaveBeenCalledWith(surfaces[1]);
+    await expect.element(screen.getByRole("textbox", { name: "Side input" })).toHaveFocus();
+    editor = screen.getByRole("textbox", { name: "Side input" }).element();
     const closeEvent = new KeyboardEvent("keydown", {
       key: "w",
       code: "KeyW",
@@ -111,7 +135,7 @@ it.each([
     });
     editor.dispatchEvent(closeEvent);
     expect(closeEvent.defaultPrevented).toBe(true);
-    expect(onClose).toHaveBeenCalledExactlyOnceWith(surfaces[0]);
+    expect(onClose).toHaveBeenCalledExactlyOnceWith(surfaces[1]);
     editor.dispatchEvent(
       new KeyboardEvent("keydown", {
         key: "w",

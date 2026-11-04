@@ -273,6 +273,54 @@ describe("workspace area focus", () => {
     expect(document.activeElement).toBe(clickedRow);
   });
 
+  it("focuses the destination panel's nested composer after it mounts", async () => {
+    using fixture = setup();
+    const panel = fixture.area("panel", 3);
+    const content = document.createElement("div");
+    content.dataset.rightPanelSurfaceContent = "true";
+    content.dataset.rightPanelSurfaceKind = "side-chat";
+    content.innerHTML = "<button>Bring back</button>";
+    panel.element.append(content);
+    panel.button.focus();
+    fixture.controller.request({ area: "panel", restore: false });
+    expect(fixture.controller.focus("panel", false)).toBe(false);
+    const composer = fixture.area("composer", 2, content);
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.dataset.testid = "composer-editor";
+    editor.textContent = "Draft";
+    composer.element.append(editor);
+    await vi.waitFor(() => expect(document.activeElement).toBe(editor));
+  });
+
+  it("focuses useful panel content instead of its toolbar or a remembered control", () => {
+    using fixture = setup();
+    const panel = fixture.area("panel", 3);
+    const content = document.createElement("div");
+    content.dataset.rightPanelSurfaceContent = "true";
+    panel.element.append(content);
+    for (const markup of [
+      '<textarea class="xterm-helper-textarea"></textarea>',
+      '<input data-panel-focus-default aria-label="Address">',
+      '<div data-panel-focus-default tabindex="0">PR content</div>',
+      '<div class="diff-render-surface">Diff content</div>',
+      '<div class="file-preview-virtualizer">File content</div>',
+      '<div data-panel-focus-default role="application" tabindex="0">Device</div>',
+    ]) {
+      content.innerHTML = `<button>Toolbar</button><button data-panel-focus-default hidden>Hidden</button>${markup}`;
+      (content.firstElementChild as HTMLElement).focus();
+      expect(fixture.controller.focus("panel", false)).toBe(true);
+      expect(document.activeElement).toBe(content.lastElementChild);
+    }
+    content.innerHTML = "<div data-panel-focus-default></div>";
+    const host = content.firstElementChild as HTMLElement;
+    const shadow = host.attachShadow({ mode: "open" });
+    shadow.innerHTML =
+      '<button tabindex="-1">Other</button><button tabindex="0">Selected file</button>';
+    expect(fixture.controller.focus("panel", false)).toBe(true);
+    expect(shadow.activeElement).toBe(shadow.lastElementChild);
+  });
+
   it("waits for a requested area to mount", async () => {
     using fixture = setup();
     fixture.area("composer", 2);

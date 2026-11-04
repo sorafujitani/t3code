@@ -448,6 +448,7 @@ function EnabledThreadPullRequestsPanel({ threadRef }: { threadRef: ScopedThread
         {/* Threads that run a stack or a sweep link hundreds of pull requests; only the rows in
           view are mounted. */}
         <LegendList<PullRequestListLine>
+          ref={(list) => list?.getScrollableNode()?.setAttribute("data-panel-focus-default", "")}
           data={lines}
           keyExtractor={lineKey}
           extraData={rowInputs}
