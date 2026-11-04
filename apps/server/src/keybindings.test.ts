@@ -251,26 +251,33 @@ it.layer(NodeServices.layer)("keybindings", (it) => {
       }).pipe(Effect.provide(layerKeybindings())),
   );
 
-  it.effect("adds a late default to an existing command once", () =>
+  it.effect.each([
+    {
+      key: "mod+alt+enter",
+      addedKey: "mod+enter",
+      command: "composer.sendBackground",
+      when: "composerFocus && draftThreadRoute",
+    },
+    {
+      key: "mod+t",
+      addedKey: "mod+alt+t",
+      command: "rightPanel.new",
+      when: "rightPanelOpen && !terminalFocus",
+    },
+  ] as const)("adds a late default to $command once", ({ key, addedKey, command, when }) =>
     Effect.gen(function* () {
       const { keybindingsConfigPath } = yield* ServerConfig.ServerConfig;
       const keybindings = yield* Keybindings.Keybindings;
-      const when = "composerFocus && draftThreadRoute";
-      const existing = { key: "mod+alt+enter", command: "composer.sendBackground", when } as const;
-      const backgroundRules = Effect.map(readKeybindingsConfig(keybindingsConfigPath), (rules) =>
-        rules.filter((entry) => entry.command === "composer.sendBackground"),
+      const existing = { key, command, when };
+      const rulesForCommand = Effect.map(readKeybindingsConfig(keybindingsConfigPath), (rules) =>
+        rules.filter((entry) => entry.command === command),
       );
       yield* writeKeybindingsConfig(keybindingsConfigPath, [existing]);
-
       yield* keybindings.syncDefaultKeybindingsOnStartup;
-      assert.deepStrictEqual(yield* backgroundRules, [
-        { key: "mod+enter", command: "composer.sendBackground", when },
-        existing,
-      ]);
-
+      assert.deepStrictEqual(yield* rulesForCommand, [{ key: addedKey, command, when }, existing]);
       yield* writeKeybindingsConfig(keybindingsConfigPath, [existing]);
       yield* keybindings.syncDefaultKeybindingsOnStartup;
-      assert.deepStrictEqual(yield* backgroundRules, [existing]);
+      assert.deepStrictEqual(yield* rulesForCommand, [existing]);
     }).pipe(Effect.provide(layerKeybindings())),
   );
 
