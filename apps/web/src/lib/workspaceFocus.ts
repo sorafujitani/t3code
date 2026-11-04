@@ -195,6 +195,24 @@ export function createWorkspaceFocusController(doc: Document) {
     }
     return focusArea(area, restore);
   };
+  const focusChat = (sideChat: boolean) => {
+    const blocked = Array.from(doc.querySelectorAll<HTMLElement>(FOCUS_BOUNDARY_SELECTOR)).some(
+      (boundary) =>
+        isWorkspaceElementVisible(boundary) &&
+        (boundary.matches('[aria-modal="true"]') || boundary.contains(doc.activeElement)),
+    );
+    if (blocked) return false;
+    const editor = Array.from(
+      doc.querySelectorAll<HTMLElement>('[data-testid="composer-editor"]'),
+    ).find(
+      (element) =>
+        (element.closest("[data-side-chat-pane]") !== null) === sideChat &&
+        isWorkspaceElementVisible(element),
+    );
+    if (!editor) return false;
+    editor.focus({ preventScroll: true });
+    return doc.activeElement === editor;
+  };
   const move = (direction: 1 | -1, fromArea?: string, closingPalette = false) => {
     // HTML context menus close on blur, unlike modal dialogs and Base UI popups.
     dismissContextMenu(false);
@@ -311,6 +329,7 @@ export function createWorkspaceFocusController(doc: Document) {
       return move(direction, fromArea, closingPalette);
     },
     focus,
+    focusChat,
     request,
     dispose: () => {
       cancelRequest();
@@ -358,6 +377,10 @@ export function startWorkspaceFocus(router: AnyRouter): () => void {
 /** Moves to the next or previous visible area. `fromArea` overrides the focused area. */
 export function moveWorkspaceFocus(direction: 1 | -1, fromArea?: string): boolean {
   return controller?.move(direction, fromArea) ?? false;
+}
+
+export function focusChatComposer(sideChat: boolean): boolean {
+  return controller?.focusChat(sideChat) ?? false;
 }
 
 /** Explicit user actions request focus after React has committed the destination. */

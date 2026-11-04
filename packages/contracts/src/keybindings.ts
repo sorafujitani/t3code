@@ -57,6 +57,8 @@ const MODEL_PICKER_KEYBINDING_COMMANDS = [
 export const STATIC_KEYBINDING_COMMANDS = [
   "workspace.focusNext",
   "workspace.focusPrevious",
+  "chat.focusMain",
+  "chat.focusSide",
   "sidebar.toggle",
   "sidebar.searchProjects",
   "navigation.back",

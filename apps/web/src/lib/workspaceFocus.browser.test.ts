@@ -32,6 +32,30 @@ function setup() {
 }
 
 describe("workspace area focus", () => {
+  it("focuses main and side composers without stealing focus from a dialog or hidden pane", () => {
+    using fixture = setup();
+    const main = fixture.append(
+      '<div data-testid="composer-editor" contenteditable="true">Main</div>',
+    );
+    const side = fixture.append(
+      '<div data-side-chat-pane><div data-testid="composer-editor" contenteditable="true">Side</div></div>',
+    );
+    const editor = side.firstElementChild;
+    expect(fixture.controller.focusChat(true)).toBe(true);
+    expect(document.activeElement).toBe(editor);
+    expect(fixture.controller.focusChat(false)).toBe(true);
+    expect(document.activeElement).toBe(main);
+    side.hidden = true;
+    expect(fixture.controller.focusChat(true)).toBe(false);
+    expect(document.activeElement).toBe(main);
+    const dialog = fixture.append(
+      '<div role="dialog" aria-modal="true" tabindex="-1">Confirm</div>',
+    );
+    dialog.focus();
+    expect(fixture.controller.focusChat(false)).toBe(false);
+    expect(document.activeElement).toBe(dialog);
+  });
+
   it("cycles in workspace order in both directions, independent of DOM order", () => {
     using fixture = setup();
     const panel = fixture.area("panel", 3);
