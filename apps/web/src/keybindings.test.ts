@@ -75,6 +75,27 @@ it("resolves shifted project search and limits shifted panel navigation to panel
   }
 });
 
+it("deletes threads only with the shifted shortcut outside terminals and the right panel", () => {
+  const chord = event({ key: "Backspace", metaKey: true, shiftKey: true });
+  for (const context of [{}, { terminalFocus: true }, { rightPanelFocus: true }]) {
+    assert.equal(
+      resolveShortcutCommand(chord, DEFAULT_RESOLVED_KEYBINDINGS, {
+        platform: "MacIntel",
+        context,
+      }),
+      Object.keys(context).length === 0 ? "thread.delete" : null,
+    );
+  }
+  assert.equal(
+    resolveShortcutCommand(
+      event({ key: "Backspace", metaKey: true }),
+      DEFAULT_RESOLVED_KEYBINDINGS,
+      { platform: "MacIntel" },
+    ),
+    null,
+  );
+});
+
 describe("terminal word navigation", () => {
   it.each(["Win32", "Linux x86_64"])(
     "leaves Ctrl+Arrow to the terminal encoder on %s",
