@@ -63,6 +63,7 @@ import { isElectron } from "~/env";
 import type { DesktopPreviewOverlay } from "~/previewStateStore";
 import type { RightPanelSurface } from "~/rightPanelStore";
 import { cn } from "~/lib/utils";
+import { requestWorkspaceFocus } from "~/lib/workspaceFocus";
 import { resolveShortcutCommand, type ShortcutMatchContext } from "~/keybindings";
 import { readLocalApi } from "~/localApi";
 import { registerMenuAction } from "~/shortcuts/dispatcher";
@@ -1055,6 +1056,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
     const target = adjacentPanelSurface(props.surfaces, props.activeSurfaceId, direction);
     if (!target) return false;
     props.onActivate(target);
+    requestWorkspaceFocus({ area: "panel", restore: false });
     return true;
   });
   const closePanelTab = useEffectEvent((repeat = false) => {
@@ -1562,7 +1564,11 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
           />
         ) : null}
       </div>
-      <div className="flex min-h-0 flex-1 flex-col" data-right-panel-surface-content>
+      <div
+        className="flex min-h-0 flex-1 flex-col"
+        data-right-panel-surface-content
+        data-right-panel-surface-kind={focusedSurface?.kind}
+      >
         {props.activeSurfaceId === null ? (
           <RightPanelEmptyState
             onAddBrowser={props.onAddBrowser}

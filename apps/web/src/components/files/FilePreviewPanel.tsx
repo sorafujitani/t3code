@@ -1345,6 +1345,7 @@ export default function FilePreviewPanel({
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
           className={cn("min-w-0 flex-1 flex-col overflow-hidden", previewPath ? "flex" : "hidden")}
+          data-file-preview-content={previewPath && !isFolder ? true : undefined}
         >
           {isFolder ? null : relativePath && attachment ? (
             <AttachmentFilePreview

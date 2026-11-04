@@ -558,6 +558,7 @@ export default function FileBrowserPanel({
         ) : null
       ) : (
         <FileTree
+          data-panel-focus-default
           model={model}
           aria-label={`${projectName} files`}
           className="min-h-0 flex-1 overflow-hidden"

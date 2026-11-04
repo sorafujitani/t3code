@@ -156,6 +156,7 @@ export function PreviewChromeRow({
               render={
                 <InputGroupInput
                   ref={inputRef}
+                  data-panel-focus-default
                   value={inputFocused ? draft : url}
                   onChange={(event) => setDraft(event.target.value)}
                   onFocus={() => {

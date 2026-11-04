@@ -182,10 +182,40 @@ export function createWorkspaceFocusController(doc: Document) {
           areas.find((element) => element.dataset.workspaceArea === "panel"))
         : areas.find((element) => element.dataset.workspaceArea === name);
     if (!area) return false;
-    const surface = area.querySelector("[data-right-panel-surface-content]");
+    const surface = area.querySelector<HTMLElement>("[data-right-panel-surface-content]");
     // A lazy surface's Suspense fallback is empty. Wait for its content instead
     // of claiming focus on the tab strip before the useful controls mount.
     if (surface && !surface.hasChildNodes()) return false;
+    if (surface && !restore && !selector) {
+      const content = surface.querySelector<HTMLElement>("[data-file-preview-content]") ?? surface;
+      const selectors =
+        surface.dataset.rightPanelSurfaceKind === "side-chat"
+          ? ['[data-testid="composer-editor"][contenteditable="true"]']
+          : [
+              ".xterm-helper-textarea",
+              ".diff-render-surface, .file-preview-virtualizer",
+              "[data-panel-focus-default]",
+              '[data-slot="scroll-area-viewport"], iframe, embed, video[controls], audio[controls]',
+              "[data-workspace-focus-default]",
+              FOCUSABLE_SELECTOR,
+            ];
+      for (const candidateSelector of selectors) {
+        for (const candidate of content.querySelectorAll<HTMLElement>(candidateSelector)) {
+          const target =
+            candidate.shadowRoot?.querySelector<HTMLElement>('[tabindex="0"]') ?? candidate;
+          if (!isWorkspaceElementVisible(target) || target.matches(":disabled")) continue;
+          if (!target.matches(FOCUSABLE_SELECTOR)) target.tabIndex = -1;
+          target.focus({ preventScroll: true });
+          const root = target.getRootNode();
+          if ((root instanceof ShadowRoot ? root.activeElement : doc.activeElement) === target)
+            return true;
+        }
+      }
+      if (surface.dataset.rightPanelSurfaceKind === "side-chat") return false;
+      content.tabIndex = -1;
+      content.focus({ preventScroll: true });
+      return doc.activeElement === content;
+    }
     if (!selector && surface?.contains(doc.activeElement)) return true;
     if (selector) {
       const target = area.querySelector<HTMLElement>(selector);
