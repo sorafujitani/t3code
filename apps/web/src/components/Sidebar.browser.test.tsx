@@ -1,20 +1,26 @@
 import { DEFAULT_CLIENT_SETTINGS, EnvironmentId, ProjectId, ThreadId } from "@t3tools/contracts";
+import { useLocation } from "@tanstack/react-router";
+import { createRef } from "react";
 import { describe, expect, it, vi } from "vite-plus/test";
-import { userEvent } from "vite-plus/test/browser";
+import { page, userEvent } from "vite-plus/test/browser";
 
 import { render } from "../../test/render";
 import { openCommandPalette } from "../commandPaletteBus";
 import { useHandleNewThread } from "../hooks/useHandleNewThread";
 import { __setClientSettingsForTests, getClientSettings } from "../hooks/useSettings";
+import { useThreadRouteTarget } from "../hooks/useThreadRouteTarget";
 import { useProjects, useQuietThreadShells } from "../state/entities";
 import { makeThreadFixture } from "../test-fixtures";
+import { resolveThreadRouteTarget } from "../threadRoutes";
 import { useUiStateStore } from "../uiStateStore";
 import type { Project } from "../types";
+import { ComposerPromptEditorTiptap } from "./ComposerPromptEditorTiptap";
 import Sidebar from "./Sidebar";
 import { SidebarProvider } from "./ui/sidebar";
 
 vi.mock("../state/entities", { spy: true });
 vi.mock("../hooks/useHandleNewThread", { spy: true });
+vi.mock("../hooks/useThreadRouteTarget", { spy: true });
 vi.mock("../commandPaletteBus", () => ({
   openCommandPalette: vi.fn(),
   isCommandPaletteOpen: () => false,
@@ -90,8 +96,16 @@ describe("sidebar header new thread", () => {
   });
 });
 
-it("opens the top thread after selecting a project scope", async () => {
+it("opens the top scoped thread and navigates from the focused composer", async () => {
+  using _platform = vi.spyOn(navigator, "platform", "get").mockReturnValue("MacIntel");
   using stack = new DisposableStack();
+  // The test router has no parameterized routes; derive the active thread from its location.
+  vi.mocked(useThreadRouteTarget).mockImplementation(function useRouteTarget() {
+    const pathname = useLocation({ select: (location) => location.pathname });
+    const [, environmentId, threadId] = pathname.split("/");
+    return resolveThreadRouteTarget({ environmentId, threadId });
+  });
+  stack.defer(() => vi.mocked(useThreadRouteTarget).mockReset());
   const previousSettings = getClientSettings();
   stack.defer(() => __setClientSettingsForTests(previousSettings));
   __setClientSettingsForTests(DEFAULT_CLIENT_SETTINGS);
@@ -125,9 +139,44 @@ it("opens the top thread after selecting a project scope", async () => {
   await using screen = await render(
     <SidebarProvider>
       <Sidebar routeReveal={{ observedKey: null, pendingKey: null }} />
+      <ComposerPromptEditorTiptap
+        editorRef={createRef()}
+        value="Draft message"
+        cursor={5}
+        contextRecords={new Map()}
+        skills={[]}
+        disabled={false}
+        placeholder="Message"
+        ariaLabel="Message"
+        onChange={() => {}}
+        onPaste={() => {}}
+      />
     </SidebarProvider>,
   );
   await userEvent.click(screen.getByLabelText("Filter threads by project", { exact: true }));
-  await userEvent.click(screen.getByRole("option", { name: /idle/ }));
+  await userEvent.click(page.getByRole("option", { name: /idle/ }));
   await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/newer"));
+  await userEvent.click(screen.getByRole("textbox", { name: "Message" }));
+  const editor = screen.getByRole("textbox", { name: "Message" }).element();
+  for (const [key, threadId] of [
+    ["ArrowUp", "newer"],
+    ["ArrowDown", "older"],
+    ["ArrowDown", "older"],
+    ["ArrowUp", "newer"],
+  ] as const) {
+    editor.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key,
+        metaKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    await vi.waitFor(() =>
+      expect(screen.router?.state.location.pathname).toBe(`/local/${threadId}`),
+    );
+    expect(document.activeElement).toBe(editor);
+    expect(window.getSelection()?.isCollapsed).toBe(true);
+  }
 });

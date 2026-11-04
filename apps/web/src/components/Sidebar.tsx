@@ -2897,10 +2897,17 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       ? selectThreadTerminalUiState(state.terminalUiStateByThreadKey, routeThreadRef).terminalOpen
       : false,
   );
-  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- subscribes to window keydown for thread navigation shortcuts using the current thread list
+  // oxlint-disable-next-line t3code/no-unreasoned-state-sync -- captures sidebar shortcuts before the composer consumes native text-selection keys
   useEffect(() => {
-    const onWindowKeyDown = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.repeat || isCommandPaletteOpen() || isModelPickerOpen()) {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.repeat ||
+        event.isComposing ||
+        isCommandPaletteOpen() ||
+        isModelPickerOpen() ||
+        (event.target instanceof Element && event.target.closest("[data-keybinding-capture]"))
+      ) {
         return;
       }
       const command = resolveShortcutCommand(event, keybindings, {
@@ -2922,6 +2929,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         dispatchProjectScopeMenu({ type: "open-changed", open: true });
         return;
       }
+      const traversalDirection = threadTraversalDirectionFromCommand(command);
+      const jumpIndex = threadJumpIndexFromCommand(command ?? "");
+      if (traversalDirection === null && jumpIndex === null) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"], [data-slot="menu-popup"]'))
+        return;
       const navigateToThreadKey = (targetThreadKey: string | null) => {
         if (!targetThreadKey) return false;
         const targetThread = threadByKey.get(targetThreadKey);
@@ -2931,8 +2943,9 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         navigateToThread(scopeThreadRef(targetThread.environmentId, targetThread.id));
         return true;
       };
-      const traversalDirection = threadTraversalDirectionFromCommand(command);
       if (traversalDirection !== null) {
+        event.preventDefault();
+        event.stopPropagation();
         navigateToThreadKey(
           resolveAdjacentThreadId({
             threadIds: orderedThreadKeys,
@@ -2942,12 +2955,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
         );
         return;
       }
-      const jumpIndex = threadJumpIndexFromCommand(command ?? "");
       if (jumpIndex === null) return;
       navigateToThreadKey(orderedThreadKeys[jumpIndex] ?? null);
     };
-    window.addEventListener("keydown", onWindowKeyDown);
-    return () => window.removeEventListener("keydown", onWindowKeyDown);
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [
     keybindings,
     isMobile,
