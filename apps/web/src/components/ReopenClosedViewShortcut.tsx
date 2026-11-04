@@ -46,6 +46,8 @@ import { toastManager } from "./ui/toast";
 const PREVIEW_FORWARDED_COMMANDS = [
   "workspace.focusNext",
   "workspace.focusPrevious",
+  "sideChat.previous",
+  "sideChat.next",
   "sidebar.toggle",
   "rightPanel.toggle",
   "rightPanel.toggleMaximized",
@@ -193,6 +195,7 @@ export function ReopenClosedViewShortcut() {
     if (!preview) return;
     const options = {
       context: {
+        rightPanelOpen: true,
         previewFocus: true,
         previewOpen: true,
         terminalFocus: false,
