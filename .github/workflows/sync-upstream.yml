@@ -1,0 +1,33 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.repository == 'sorafujitani/t3code' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Merge upstream into main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          if ! gh api --method POST "repos/$GH_REPO/merge-upstream" \
+            -f branch=main > "$RUNNER_TEMP/sync-result.json"; then
+            echo "::error::Upstream sync failed. Resolve any merge conflicts or permission errors before retrying."
+            echo "Sync failed. No force update was attempted. See the step log for details." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          jq -r '.message, "Merge type: \(.merge_type)", "Base branch: \(.base_branch)"' \
+            "$RUNNER_TEMP/sync-result.json" >> "$GITHUB_STEP_SUMMARY"
