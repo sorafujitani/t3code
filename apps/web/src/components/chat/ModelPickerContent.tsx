@@ -75,6 +75,7 @@ type ModelPickerItem = {
   driverKind: ProviderDriverKind;
   instanceDisplayName: string;
   instanceAccentColor?: string | undefined;
+  brandIcon?: "deepseek" | undefined;
   acpRegistryAgentId?: string | undefined;
   acpRegistryIconUrl?: string | undefined;
   continuationGroupKey?: string | undefined;
@@ -573,6 +574,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
           instanceDisplayName: entry.displayName,
           ...(entry.accentColor ? { instanceAccentColor: entry.accentColor } : {}),
           ...(entry.acpRegistryAgentId ? { acpRegistryAgentId: entry.acpRegistryAgentId } : {}),
+          brandIcon: entry.brandIcon,
           ...(entry.acpRegistryIconUrl ? { acpRegistryIconUrl: entry.acpRegistryIconUrl } : {}),
           ...(entry.continuationGroupKey
             ? { continuationGroupKey: entry.continuationGroupKey }
@@ -1046,6 +1048,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                     providerDisplayName={model.instanceDisplayName}
                     providerAccentColor={model.instanceAccentColor}
                     acpRegistryAgentId={model.acpRegistryAgentId}
+                    brandIcon={model.brandIcon}
                     acpRegistryIconUrl={model.acpRegistryIconUrl}
                     isFavorite={favoritesSet.has(providerModelKey(model.instanceId, model.slug))}
                     isSelected={

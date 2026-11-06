@@ -43,6 +43,23 @@ function catalogWithInspection(
 }
 
 describe("acpRegistrySnapshotReadiness", () => {
+  it.each([
+    ["dsh", "deepseek"],
+    ["/opt/bin/dsh", "deepseek"],
+    ["C:\\tools\\dsh.cmd", "deepseek"],
+    ["/opt/dsh/other-agent", undefined],
+    ["dsh-other", undefined],
+  ] as const)("identifies local harness branding for %s", (commandPath, brandIcon) => {
+    const snapshot = buildCheckedAcpRegistrySnapshot({
+      ...identity,
+      settings: decodeSettings({ source: "local", commandPath }),
+      checkedAt: "2026-11-06T08:00:00.000Z",
+      inspection: { status: "ready", agentId: "local", version: null, distribution: "local" },
+    });
+    expect(snapshot).toHaveProperty("driver", "acpRegistry");
+    expect(snapshot.brandIcon).toBe(brandIcon);
+  });
+
   it("treats a live empty command advertisement as an authoritative replacement", () => {
     const provider = buildCheckedAcpRegistrySnapshot({
       ...identity,

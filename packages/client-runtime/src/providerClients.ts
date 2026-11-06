@@ -16,6 +16,8 @@ import { museClient } from "@t3tools/provider-muse/client";
 import { openCodeClient } from "@t3tools/provider-opencode/client";
 import { piClient } from "@t3tools/provider-pi/client";
 
+export { deepseekIcon, resolveProviderIconKind } from "./providerBrandIcons.ts";
+
 export const providerClients = makeProviderClientRegistry([
   {
     driverKind: ProviderDriverKind.make("codex"),

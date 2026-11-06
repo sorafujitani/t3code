@@ -1,4 +1,5 @@
 import { type CSSProperties, memo } from "react";
+import { deepseekIcon, resolveProviderIconKind } from "@t3tools/client-runtime/provider-clients";
 
 import {
   normalizeProviderAccentColor,
@@ -60,6 +61,8 @@ export function resolveProviderInstanceAcpRegistryIconUrl(input: {
 export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
   driverKind: ProviderDriverKind;
   displayName: string;
+  brandIcon?: "deepseek" | undefined;
+  model?: string | undefined;
   accentColor?: string | undefined;
   acpRegistryAgentId?: string | undefined;
   acpRegistryIconUrl?: string | undefined;
@@ -71,8 +74,14 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
   badgeClassName?: string;
   indicatorBackground?: string;
 }) {
-  const Icon = PROVIDER_ICON_BY_PROVIDER[props.driverKind] ?? null;
-  const packageIcon = providerClients.get(props.driverKind)?.icon;
+  const iconKind = resolveProviderIconKind(props);
+  const iconDriver =
+    iconKind === "deepseek"
+      ? props.driverKind
+      : ProviderDriverKind.make(iconKind ?? props.driverKind);
+  const Icon = PROVIDER_ICON_BY_PROVIDER[iconDriver] ?? null;
+  const packageIcon =
+    iconKind === "deepseek" ? deepseekIcon : providerClients.get(iconDriver)?.icon;
   const indicatorBackground = props.indicatorBackground ?? "var(--card)";
   const accentColor = normalizeProviderAccentColor(props.accentColor);
   const accentStyle = accentColor
@@ -83,7 +92,7 @@ export const ProviderInstanceIcon = memo(function ProviderInstanceIcon(props: {
     : undefined;
   const badgeContent = props.badgeContent ?? "initials";
   const iconClassName = cn(props.size === "compact" && "size-3.5", props.iconClassName);
-  const isAcpRegistry = props.driverKind === "acpRegistry";
+  const isAcpRegistry = iconKind === "acpRegistry";
   const acpRegistryIconUrl = resolveProviderInstanceAcpRegistryIconUrl({
     driverKind: props.driverKind,
     agentId: props.acpRegistryAgentId,

@@ -216,6 +216,7 @@ function SubagentAvatar({
   driver,
   displayName,
   iconUrl,
+  brandIcon,
   accentColor,
   showBadge,
   status,
@@ -224,6 +225,7 @@ function SubagentAvatar({
   driver?: ProviderDriverKind | undefined;
   displayName?: string | undefined;
   iconUrl?: string | undefined;
+  brandIcon?: "deepseek" | undefined;
   accentColor?: string | undefined;
   showBadge: boolean;
   status?: OrchestrationV2TurnItem["status"] | undefined;
@@ -242,6 +244,7 @@ function SubagentAvatar({
           driverKind={driver}
           displayName={displayName ?? driver}
           accentColor={accentColor}
+          brandIcon={brandIcon}
           acpRegistryIconUrl={iconUrl}
           showBadge={showBadge}
           size="compact"
@@ -306,6 +309,11 @@ export function EnvironmentSubagentAvatar({
     const entry = all.find((candidate) => candidate.instanceId === providerInstanceId);
     return entry !== undefined && shouldShowInstanceBadge(entry, all);
   });
+  const brandIcon = useAtomValue(
+    providersAtom,
+    (providers) =>
+      providers?.find((provider) => provider.instanceId === providerInstanceId)?.brandIcon,
+  );
   const iconUrl = useAtomValue(
     providersAtom,
     (providers) =>
@@ -316,6 +324,7 @@ export function EnvironmentSubagentAvatar({
       {...props}
       driver={providerDriver ?? (remote === undefined ? driver : undefined)}
       displayName={displayName}
+      brandIcon={brandIcon}
       iconUrl={iconUrl}
       accentColor={accentColor}
       showBadge={showBadge}
@@ -707,6 +716,7 @@ function HandoffEndpoint(props: {
               displayName={entry?.displayName ?? props.instanceId}
               accentColor={entry?.accentColor}
               acpRegistryAgentId={entry?.acpRegistryAgentId}
+              brandIcon={entry?.brandIcon}
               acpRegistryIconUrl={entry?.acpRegistryIconUrl}
               showBadge={showBadge}
               size="compact"
