@@ -302,7 +302,7 @@ function makeLocalCommandHarness(input: {
     readonly contextRun: "current" | "failed" | "cancelled" | "delivered";
     readonly nativeForkFrom?: "idle" | "busy";
     readonly switchedProvider?: boolean;
-    readonly permissionMode?: "full-access" | "approval-required";
+    readonly threadRuntimeMode?: OrchestrationV2ThreadProjection["thread"]["runtimeMode"];
   };
 }) {
   const settledRuns: Array<string> = [];
@@ -567,7 +567,7 @@ function makeLocalCommandHarness(input: {
       ...projection,
       thread: {
         ...projection.thread,
-        runtimeMode: input.sideChat.permissionMode ?? "full-access",
+        runtimeMode: input.sideChat.threadRuntimeMode ?? "full-access",
         lineage: {
           parentThreadId,
           relationshipToParent: "fork",
@@ -1273,7 +1273,7 @@ effectIt.effect.each([
   { contextRun: "delivered", runtimeMode: "full-access", context: "" },
   {
     contextRun: "current",
-    permissionMode: "approval-required",
+    threadRuntimeMode: "approval-required",
     runtimeMode: "approval-required",
     context: "SIDE_CHAT_CONTEXT",
   },
