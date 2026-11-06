@@ -20,6 +20,7 @@ export const ModelListRow = memo(function ModelListRow(props: {
   driverKind: ProviderDriverKind;
   providerDisplayName: string;
   providerAccentColor?: string | undefined;
+  brandIcon?: "deepseek" | undefined;
   acpRegistryAgentId?: string | undefined;
   acpRegistryIconUrl?: string | undefined;
   isFavorite: boolean;
@@ -53,9 +54,10 @@ export const ModelListRow = memo(function ModelListRow(props: {
           "data-disabled:pointer-events-auto data-disabled:cursor-not-allowed",
       )}
     >
-      {/* One row shape in every tab: the logo names the provider, so Favorites needs no second line. */}
       <ProviderInstanceIcon
         driverKind={props.driverKind}
+        brandIcon={props.brandIcon}
+        model={props.slug}
         displayName={props.providerDisplayName}
         accentColor={props.providerAccentColor}
         acpRegistryAgentId={props.acpRegistryAgentId}

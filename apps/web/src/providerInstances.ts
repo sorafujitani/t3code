@@ -31,6 +31,7 @@ export interface ProviderInstanceEntry {
   readonly driverKind: ProviderDriverKind;
   readonly displayName: string;
   readonly accentColor?: string | undefined;
+  readonly brandIcon?: ServerProvider["brandIcon"];
   readonly acpRegistryAgentId?: string | undefined;
   readonly acpRegistryIconUrl?: string | undefined;
   readonly continuationGroupKey?: string | undefined;
@@ -64,6 +65,7 @@ export function deriveProviderInstanceEntries(
       instanceId,
       driverKind,
       displayName: resolveProviderInstanceDisplayName(snapshot),
+      brandIcon: snapshot.brandIcon,
       accentColor: normalizeProviderAccentColor(snapshot.accentColor),
       ...(driverKind === "acpRegistry" && snapshot.iconUrl
         ? { acpRegistryIconUrl: snapshot.iconUrl }

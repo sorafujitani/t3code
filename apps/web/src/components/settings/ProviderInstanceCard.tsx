@@ -899,6 +899,7 @@ export function ProviderInstanceCard({
     <ProviderInstanceIcon
       driverKind={driverKind ?? instance.driver}
       displayName={displayName}
+      brandIcon={liveProvider?.brandIcon}
       accentColor={accentColor}
       acpRegistryAgentId={
         readConfigString(instance.config, "source") === "local"

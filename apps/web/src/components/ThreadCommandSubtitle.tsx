@@ -39,6 +39,7 @@ export function ThreadCommandSubtitle(props: {
   driverKind?: ProviderDriverKind | null;
   providerDisplayName?: string | null;
   acpRegistryAgentId?: string | undefined;
+  brandIcon?: "deepseek" | undefined;
   acpRegistryIconUrl?: string | undefined;
   variant?: ThreadCommandSubtitleVariant;
   className?: string;
@@ -94,6 +95,7 @@ export function ThreadCommandSubtitle(props: {
             driverKind={props.driverKind}
             displayName={props.providerDisplayName ?? props.driverKind}
             acpRegistryAgentId={props.acpRegistryAgentId}
+            brandIcon={props.brandIcon}
             acpRegistryIconUrl={props.acpRegistryIconUrl}
             iconClassName="size-3 shrink-0 opacity-70"
           />

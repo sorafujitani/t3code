@@ -207,6 +207,10 @@ function baseSnapshot(
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(input.accentColor ? { accentColor: input.accentColor } : {}),
     ...(iconUrl ? { iconUrl } : {}),
+    ...(input.settings.source === "local" &&
+    /^dsh(?:\.cmd|\.exe)?$/i.test(input.settings.commandPath.split(/[\\/]/).at(-1) ?? "")
+      ? { brandIcon: "deepseek" as const }
+      : {}),
     continuation: { groupKey: input.continuationKey },
     supportsTextGeneration: false,
     enabled: input.settings.enabled,

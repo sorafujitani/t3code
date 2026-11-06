@@ -1,3 +1,4 @@
+import { ProviderIcon } from "../../components/ProviderIcon";
 import type { ReactNode } from "react";
 import { Pressable, View } from "react-native";
 import { AppText as Text } from "../../components/ui/AppText";
@@ -62,6 +63,14 @@ export function ModelRowContent(
         onPress={props.onPress}
       >
         {props.leadingSelection}
+        {props.option.providerBrandIcon ? (
+          <ProviderIcon
+            provider={props.option.providerDriver}
+            brandIcon={props.option.providerBrandIcon}
+            model={props.option.selection.model}
+            size={16}
+          />
+        ) : null}
         <View className="min-w-0 flex-1">
           <View className="flex-row items-center gap-2">
             <Text

@@ -154,6 +154,7 @@ export function useCommandPaletteThreadItems(input: {
             thread.runtime?.providerName ?? providerEntry?.displayName ?? modelInstanceId
           }
           acpRegistryAgentId={providerEntry?.acpRegistryAgentId}
+          brandIcon={providerEntry?.brandIcon}
           acpRegistryIconUrl={providerEntry?.acpRegistryIconUrl}
         />
       );
