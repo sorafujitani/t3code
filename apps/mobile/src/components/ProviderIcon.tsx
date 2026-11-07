@@ -13,8 +13,9 @@ import { AppText as Text } from "./ui/AppText";
 import { cn } from "../lib/cn";
 import {
   deepseekIcon,
-  resolveProviderIconKind,
   getProviderClient,
+  openRouterIcon,
+  resolveProviderIconKind,
 } from "@t3tools/client-runtime/provider-clients";
 
 type ProviderIconProps = {
@@ -110,7 +111,12 @@ export function ProviderIcon(props: ProviderIconProps) {
     );
   }
 
-  const packageIcon = iconKind === "deepseek" ? deepseekIcon : getProviderClient(iconKind)?.icon;
+  const packageIcon =
+    iconKind === "deepseek"
+      ? deepseekIcon
+      : iconKind === "openrouter"
+        ? openRouterIcon
+        : getProviderClient(iconKind)?.icon;
   if (packageIcon) {
     const themeFill = (fill: { readonly light: string; readonly dark: string }) =>
       isDarkMode ? fill.dark : fill.light;

@@ -5,7 +5,13 @@ import {
   squashAtomCommandFailure,
   type AtomCommandResult,
 } from "@t3tools/client-runtime/state/runtime";
-import { MessageId, ThreadId, type ScopedThreadRef } from "@t3tools/contracts";
+import {
+  MessageId,
+  ThreadId,
+  type ModelSelection,
+  type RuntimeMode,
+  type ScopedThreadRef,
+} from "@t3tools/contracts";
 
 import * as Dialog from "../../components/ui/Dialog";
 import { uuidv4 } from "../../lib/uuid";
@@ -17,7 +23,8 @@ import { useOpenLinkedThread } from "./useOpenLinkedThread";
 
 /**
  * Forks `source` at its latest stable point into a side chat, sends `prompt` there, and opens
- * it like any linked thread. Resolves false when the side chat did not start.
+ * it like any linked thread. Resolves false when the side chat did not start. `settings` are
+ * what the parent's composer would send, which its thread gets only on its next send.
  */
 export function useStartSideChat() {
   const forkSideChat = useAtomCommand(threadEnvironment.forkSideChat, { reportFailure: false });
@@ -34,7 +41,11 @@ export function useStartSideChat() {
     Dialog.alert("Side chat not started", error instanceof Error ? error.message : fallback);
   };
 
-  return async (source: ScopedThreadRef, prompt: string): Promise<boolean> => {
+  return async (
+    source: ScopedThreadRef,
+    prompt: string,
+    settings: { readonly runtimeMode: RuntimeMode; readonly modelSelection: ModelSelection },
+  ): Promise<boolean> => {
     const targetThreadId = ThreadId.make(uuidv4());
     const fork = await forkSideChat({
       environmentId: source.environmentId,
@@ -80,7 +91,9 @@ export function useStartSideChat() {
           text: prompt,
           attachments: [],
         },
+        modelSelection: settings.modelSelection,
         titleSeed: deriveThreadTitleSeed({ text: prompt, attachments: [] }),
+        // This fork keeps the Full access side chats get from the server.
         runtimeMode: sideChat.runtimeMode,
         interactionMode: "default",
         createdAt: new Date().toISOString(),
