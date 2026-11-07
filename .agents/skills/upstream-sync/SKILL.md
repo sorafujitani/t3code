@@ -10,6 +10,11 @@ finishes the merges it cannot. The merge happens in the sync worktree, `.t3/upst
 under the main checkout (`prepare` prints its absolute path, called `$WT` below), through
 `scripts/sync-upstream.sh`. Never change the main checkout's files or branch.
 
+A launchd job (`scripts/sync-upstream.sh install`) runs `auto` every 3 hours. `auto` has
+Codex edit files using the policy below, and the script does the git work, verification,
+and publishing. When it stops, it records the upstream commit in `.t3/upstream-sync.failed`
+and waits for newer upstream commits; follow the steps below to finish by hand.
+
 From a thread worktree, the script and your edits in `$WT` write outside the workspace: the
 shared `.git` directory and the main checkout's `.t3`. Run them with escalated sandbox access.
 
