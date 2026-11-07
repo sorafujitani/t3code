@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { createWorkspaceFocusController } from "./workspaceFocus";
+import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { EnvironmentId, ThreadId } from "@t3tools/contracts";
+import type { AnyRouter } from "@tanstack/react-router";
+import { fakeTimers } from "../../test/render";
+import { useRightPanelStore } from "../rightPanelStore";
+import { createWorkspaceFocusController, startWorkspaceFocus } from "./workspaceFocus";
 
 function setup() {
   const root = document.createElement("div");
@@ -289,6 +294,35 @@ describe("workspace area focus", () => {
     editor.contentEditable = "true";
     editor.dataset.testid = "composer-editor";
     editor.textContent = "Draft";
+    composer.element.append(editor);
+    await vi.waitFor(() => expect(document.activeElement).toBe(editor));
+  });
+
+  it("focuses a newly opened side chat's composer once it mounts", async () => {
+    using fixture = setup();
+    using _timers = fakeTimers();
+    useRightPanelStore.setState({ byThreadKey: {}, userActionRevisionByThreadKey: {} });
+    const router = { subscribe: () => () => {} } as unknown as AnyRouter;
+    using cleanup = new DisposableStack();
+    cleanup.defer(startWorkspaceFocus(router));
+    const panel = fixture.area("panel", 3);
+    const content = document.createElement("div");
+    content.dataset.rightPanelSurfaceContent = "true";
+    content.dataset.rightPanelSurfaceKind = "side-chat";
+    content.innerHTML = "<div data-side-chat-pane><button>Bring back</button></div>";
+    panel.element.append(content);
+    useRightPanelStore
+      .getState()
+      .openSideChat(
+        scopeThreadRef(EnvironmentId.make("e"), ThreadId.make("main")),
+        ThreadId.make("side"),
+      );
+    vi.advanceTimersToNextFrame();
+    expect(document.activeElement).not.toBe(content.querySelector("button"));
+    const composer = fixture.area("composer", 2, content.firstElementChild as HTMLElement);
+    const editor = document.createElement("div");
+    editor.contentEditable = "true";
+    editor.dataset.testid = "composer-editor";
     composer.element.append(editor);
     await vi.waitFor(() => expect(document.activeElement).toBe(editor));
   });

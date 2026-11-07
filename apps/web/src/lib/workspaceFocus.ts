@@ -389,7 +389,11 @@ export function startWorkspaceFocus(router: AnyRouter): () => void {
       const next = state.byThreadKey[threadKey];
       const before = previous.byThreadKey[threadKey];
       if (next?.isOpen && (!before?.isOpen || next.activeSurfaceId !== before.activeSurfaceId))
-        requestWorkspaceFocus({ area: "panel" });
+        // A side chat mounts its toolbar before its composer; wait for the composer.
+        requestWorkspaceFocus({
+          area: "panel",
+          restore: !next.activeSurfaceId?.startsWith("side-chat:"),
+        });
     }
   });
   const stopRoute = router.subscribe("onResolved", ({ fromLocation, toLocation }) => {
