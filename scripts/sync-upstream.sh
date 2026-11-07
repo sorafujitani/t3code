@@ -75,6 +75,7 @@ verify() {
 
 publish() {
   local body="${1:-}"
+  [ -z "$body" ] || body="$(cd "$(dirname "$body")" && pwd)/$(basename "$body")"
   fetch
   require_merged
   git push -q --force origin "HEAD:refs/heads/$BRANCH"

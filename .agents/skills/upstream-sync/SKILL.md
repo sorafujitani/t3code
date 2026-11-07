@@ -6,28 +6,32 @@ description: Merge pingdotgg/t3code main into this fork's main, resolving confli
 # Upstream sync
 
 GitHub's hourly `Sync upstream` workflow merges upstream when nothing conflicts. This skill
-finishes the merges it cannot. Work only in `.t3/upstream-sync` through
-`scripts/sync-upstream.sh`; never change the main checkout or its branch.
+finishes the merges it cannot. The merge happens in the sync worktree, `.t3/upstream-sync`
+under the main checkout (`prepare` prints its absolute path, called `$WT` below), through
+`scripts/sync-upstream.sh`. Never change the main checkout's files or branch.
+
+From a thread worktree, the script and your edits in `$WT` write outside the workspace: the
+shared `.git` directory and the main checkout's `.t3`. Run them with escalated sandbox access.
 
 ## Steps
 
 1. Run `scripts/sync-upstream.sh prepare`.
    - Exit 3: already up to date. Report that in one line and stop.
    - Exit 0: merged cleanly. Go to step 3.
-   - Exit 2: conflicts are left in `.t3/upstream-sync`. Resolve them (step 2).
-2. Resolve every conflicted file, `git add` it, and `git commit --no-edit` in the worktree.
+   - Exit 2: conflicts are left in `$WT`. Resolve them (step 2).
+2. Resolve every conflicted file in `$WT`, `git add` it, and `git commit --no-edit` there.
 3. Run `scripts/sync-upstream.sh verify`. Fix failures the merge caused, commit, and run it again.
-4. Write the PR body to `.t3/upstream-sync-pr.md` and run
-   `scripts/sync-upstream.sh publish .t3/upstream-sync-pr.md`. It merges the PR into `main`.
+4. Write the PR body to a file and run `scripts/sync-upstream.sh publish <file>`. It merges
+   the PR into `main`.
 
 ## Resolving conflicts
 
 The fork's intent lives in its own commits. Read them before deciding:
 
 ```sh
-git -C .t3/upstream-sync log --no-merges --format='%h %s' upstream/main..origin/main
-git -C .t3/upstream-sync log -p --no-merges upstream/main..origin/main -- <file>
-git -C .t3/upstream-sync log --format='%h %s' origin/main..upstream/main -- <file>
+git -C "$WT" log --no-merges --format='%h %s' upstream/main..origin/main
+git -C "$WT" log -p --no-merges upstream/main..origin/main -- <file>
+git -C "$WT" log --format='%h %s' origin/main..upstream/main -- <file>
 ```
 
 - Keep both sides whenever they can coexist: fork additions such as the DeepSeek icons,
@@ -38,7 +42,7 @@ git -C .t3/upstream-sync log --format='%h %s' origin/main..upstream/main -- <fil
   inheritance.
 - Look past textual conflicts. An upstream commit that touches a fork feature in a file that
   merged cleanly can still undo it; check the fork commits' files with
-  `git diff origin/main HEAD -- <file>`.
+  `git -C "$WT" diff origin/main HEAD -- <file>`.
 - For user docs, describe the merged behavior.
 - Otherwise prefer upstream.
 
