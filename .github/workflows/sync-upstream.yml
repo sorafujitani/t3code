@@ -84,14 +84,8 @@ jobs:
             echo "Upstream \`main\`: \`$UPSTREAM_SHA\`  "
             echo "Last checked: $RUN_URL"
             echo
-            echo "Resolve locally, keeping this fork's customizations, then push \`main\`:"
-            echo
-            echo '```sh'
-            echo "git fetch https://github.com/$UPSTREAM.git main"
-            echo "git merge FETCH_HEAD"
-            echo '```'
-            echo
-            echo "The next hourly sync closes this issue."
+            echo "The scheduled T3 Code task resolves this with the \`upstream-sync\` skill and closes this issue."
+            echo "To run it by hand: \`scripts/sync-upstream.sh prepare\`, resolve, \`verify\`, then \`publish\`."
           } > "$RUNNER_TEMP/issue.md"
           cat "$RUNNER_TEMP/issue.md" >> "$GITHUB_STEP_SUMMARY"
           gh label create "$ISSUE_LABEL" --color D93F0B --description "Automated upstream sync" --force
