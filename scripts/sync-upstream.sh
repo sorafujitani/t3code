@@ -24,7 +24,8 @@ LOG="$HOME/Library/Logs/t3code-upstream-sync.log"
 self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 root="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
 wt="$root/.t3/upstream-sync"
-repo="$(cd "$root" && gh repo view --json nameWithOwner --jq .nameWithOwner)"
+# Named explicitly: with no default set, gh prefers a remote called "upstream" over origin.
+repo="$(gh repo view "$(git -C "$root" remote get-url origin)" --json nameWithOwner --jq .nameWithOwner)"
 
 fail() {
   echo "sync-upstream: $*" >&2
