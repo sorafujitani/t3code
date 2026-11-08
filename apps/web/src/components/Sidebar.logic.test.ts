@@ -11,6 +11,7 @@ import {
   getFallbackThreadIdAfterDelete,
   hasUnseenCompletion,
   resolveSidebarRowThreadId,
+  resolveAdjacentThreadId,
   orderItemsByPreferredIds,
   pinOrderKeyBetween,
   resolveSidebarSweepKeys,
@@ -1628,4 +1629,22 @@ describe("shouldCreateNewThreadInCurrentProject", () => {
     expect(shouldCreateNewThreadInCurrentProject(false, 0, 0)).toBe(true);
     expect(shouldCreateNewThreadInCurrentProject(true, 2, 2)).toBe(true);
   });
+});
+
+describe("resolveAdjacentThreadId", () => {
+  const threadIds = ["a", "b", "c"];
+  it.each([
+    ["b", "next", "c"],
+    ["b", "previous", "a"],
+    ["c", "next", "a"],
+    ["a", "previous", "c"],
+    [null, "next", "a"],
+    [null, "previous", "c"],
+    ["missing", "next", null],
+  ] as const)(
+    "from %s goes %s to %s, wrapping at the ends",
+    (currentThreadId, direction, expected) => {
+      expect(resolveAdjacentThreadId({ threadIds, currentThreadId, direction })).toBe(expected);
+    },
+  );
 });

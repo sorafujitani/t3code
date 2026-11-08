@@ -806,11 +806,8 @@ export function resolveAdjacentThreadId<T>(input: {
     return null;
   }
 
-  if (direction === "previous") {
-    return currentIndex > 0 ? (threadIds[currentIndex - 1] ?? null) : null;
-  }
-
-  return currentIndex < threadIds.length - 1 ? (threadIds[currentIndex + 1] ?? null) : null;
+  const step = direction === "previous" ? -1 : 1;
+  return threadIds[(currentIndex + step + threadIds.length) % threadIds.length] ?? null;
 }
 
 export type SidebarThreadStatus =
