@@ -7,7 +7,7 @@
 #   scripts/sync-upstream.sh verify             install and run check:changed against upstream/main
 #   scripts/sync-upstream.sh publish [body.md]  push, open a PR into main, merge it, close the sync issue
 #   scripts/sync-upstream.sh auto               all of the above, with Codex resolving conflicts and failures
-#   scripts/sync-upstream.sh install|uninstall  run `auto` from launchd every 3 hours (macOS)
+#   scripts/sync-upstream.sh install|uninstall  run `auto` from launchd daily at 17:15 (macOS)
 #
 # The upstream-sync skill (.agents/skills/upstream-sync) holds the conflict resolution policy.
 set -euo pipefail
@@ -193,7 +193,8 @@ install() {
   </array>
   <key>EnvironmentVariables</key>
   <dict><key>PATH</key><string>$PATH</string></dict>
-  <key>StartInterval</key><integer>10800</integer>
+  <key>StartCalendarInterval</key>
+  <dict><key>Hour</key><integer>17</integer><key>Minute</key><integer>15</integer></dict>
   <key>StandardOutPath</key><string>$LOG</string>
   <key>StandardErrorPath</key><string>$LOG</string>
 </dict>
