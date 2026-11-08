@@ -209,6 +209,8 @@ import {
 } from "./ComposerAttachmentStrip";
 import { ComposerPrimaryActions } from "./ComposerPrimaryActions";
 import { ComposerFooterPrimaryActions } from "./ComposerFooterControls";
+import { ComposerStatusLine } from "./ComposerStatusLine";
+import { countUserTurns } from "./ComposerStatusLine.logic";
 import { ComposerPendingUserInputPanel } from "./ComposerPendingUserInputPanel";
 import { ComposerPlanFollowUpBanner } from "./ComposerPlanFollowUpBanner";
 import { resolveComposerMenuActiveItemId } from "./composerMenuHighlight";
@@ -1002,6 +1004,10 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
 
   const activeThreadModelDisplayName = resolveContextWindowModelDisplayName(
     activeThreadModelSelection,
+    modelOptionsByInstance,
+  );
+  const selectedModelDisplayName = resolveContextWindowModelDisplayName(
+    selectedModelSelection,
     modelOptionsByInstance,
   );
   const reserveContextWindowMeter = shouldReserveContextWindowMeter({
@@ -3746,6 +3752,13 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           </div>
         </ComposerSurface.Main>
       </div>
+      <ComposerStatusLine
+        model={selectedModelDisplayName}
+        harness={selectedProviderEntry?.displayName ?? null}
+        effort={selectedPromptEffort}
+        contextWindow={activeContextWindow}
+        turns={countUserTurns(contextWindowEntries)}
+      />
     </form>
   );
 });
