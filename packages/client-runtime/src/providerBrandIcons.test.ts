@@ -20,9 +20,28 @@ describe("resolveProviderIconKind", () => {
     ).toBe(expected);
   });
 
+  it.each([
+    ["pi", "openai-codex/gpt-6.1-sol", "codex"],
+    ["pi", "openai/gpt-6-sol", "codex"],
+    ["opencode", "anthropic/claude-haiku-4-5", "claudeAgent"],
+    ["opencode", "openrouter/anthropic/claude-haiku-4-5", "claudeAgent"],
+    ["opencode", "xai/grok-4.3", "grok"],
+    ["opencode", "deepseek/deepseek-chat", "deepseek"],
+    ["opencode", "opencode/big-pickle", "opencode"],
+    ["opencode", "opencode/claude-sonnet-4-5", "claudeAgent"],
+    ["opencode", "github-copilot/gpt-5", "codex"],
+    ["pi", "github-copilot/o4-mini", "codex"],
+    ["pi", "google/gemini-2.5-pro", "pi"],
+    ["pi", "gpt-6-luna", "pi"],
+    ["pi", undefined, "pi"],
+  ])("gives %s's model %s its vendor's icon", (driverKind, model, expected) => {
+    expect(resolveProviderIconKind({ driverKind, model })).toBe(expected);
+  });
+
   it("leaves other harnesses alone even with a matching model ID", () => {
-    const model = '["anthropic","claude-haiku-4-5"]';
-    expect(resolveProviderIconKind({ driverKind: "acpRegistry", model })).toBe("acpRegistry");
-    expect(resolveProviderIconKind({ driverKind: "pi", brandIcon: "deepseek", model })).toBe("pi");
+    expect(resolveProviderIconKind({ driverKind: "acpRegistry", model: '["anthropic","x"]' })).toBe(
+      "acpRegistry",
+    );
+    expect(resolveProviderIconKind({ driverKind: "cursor", model: "anthropic/x" })).toBe("cursor");
   });
 });
