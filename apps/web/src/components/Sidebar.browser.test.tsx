@@ -169,8 +169,8 @@ it.each([false, true])(
     await userEvent.click(screen.getByRole("textbox", { name: "Message" }));
     const editor = screen.getByRole("textbox", { name: "Message" }).element();
     for (const [key, threadId] of [
-      ["ArrowUp", "newer"],
-      ["ArrowDown", "older"],
+      ["ArrowUp", "older"],
+      ["ArrowDown", "newer"],
       ["ArrowDown", "older"],
       ["ArrowUp", "newer"],
       ["ArrowDown", "older"],
