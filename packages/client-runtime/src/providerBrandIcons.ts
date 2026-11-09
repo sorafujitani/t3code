@@ -14,36 +14,76 @@ export const deepseekIcon: ProviderIcon = {
   ],
 };
 
+const MODEL_VENDOR_ICON_KINDS: Readonly<Record<string, string>> = {
+  openai: "codex",
+  "openai-codex": "codex",
+  anthropic: "claudeAgent",
+  xai: "grok",
+  "grok-cli": "grok",
+  deepseek: "deepseek",
+};
+
+const MODEL_FAMILY_ICON_KINDS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^claude/i, "claudeAgent"],
+  [/^(?:gpt|chatgpt|codex|o\d)(?:-|$)/i, "codex"],
+  [/^grok/i, "grok"],
+  [/^deepseek/i, "deepseek"],
+];
+
+function vendorIconKind(vendors: ReadonlyArray<string>): string | undefined {
+  for (const vendor of vendors) {
+    const kind = MODEL_VENDOR_ICON_KINDS[vendor.toLowerCase()];
+    if (kind) return kind;
+  }
+  return undefined;
+}
+
+/** Gateways such as OpenCode Zen or GitHub Copilot name only the model, not its vendor. */
+function modelFamilyIconKind(modelId: string): string | undefined {
+  return MODEL_FAMILY_ICON_KINDS.find(([family]) => family.test(modelId))?.[1];
+}
+
+/** DeepSeek Harness model IDs are JSON `[vendor, model]` pairs. */
+function deepseekModelVendors(model: string): ReadonlyArray<string> {
+  try {
+    const identity: unknown = JSON.parse(model);
+    return Array.isArray(identity) &&
+      identity.length === 2 &&
+      identity.every((part): part is string => typeof part === "string")
+      ? identity.slice(0, 1)
+      : [];
+  } catch {
+    // Other ACP agents and custom models may use opaque, non-JSON IDs.
+    return [];
+  }
+}
+
+/**
+ * The icon for a harness, or for one of its models when the harness routes several vendors'
+ * models. Pi and OpenCode IDs are `vendor/model`, possibly behind a router like
+ * `openrouter/anthropic/model`. Unknown vendors keep the harness icon.
+ */
 export function resolveProviderIconKind(input: {
   readonly driverKind: string | null | undefined;
   readonly brandIcon?: "deepseek" | undefined;
   readonly model?: string | undefined;
 }): string | null | undefined {
-  if (input.driverKind !== "acpRegistry" || input.brandIcon !== "deepseek") {
-    return input.driverKind;
+  if (!input.model) {
+    return input.driverKind === "acpRegistry" && input.brandIcon === "deepseek"
+      ? "deepseek"
+      : input.driverKind;
   }
-  if (input.model) {
-    try {
-      const identity: unknown = JSON.parse(input.model);
-      if (
-        Array.isArray(identity) &&
-        identity.length === 2 &&
-        identity.every((part) => typeof part === "string")
-      ) {
-        switch (identity[0]) {
-          case "openai":
-          case "openai-codex":
-            return "codex";
-          case "anthropic":
-            return "claudeAgent";
-          case "xai":
-          case "grok-cli":
-            return "grok";
-        }
-      }
-    } catch {
-      // Other ACP agents and custom models may use opaque, non-JSON IDs.
-    }
+  if (input.driverKind === "acpRegistry" && input.brandIcon === "deepseek") {
+    return vendorIconKind(deepseekModelVendors(input.model)) ?? "deepseek";
   }
-  return "deepseek";
+  if (input.driverKind === "pi" || input.driverKind === "opencode") {
+    const segments = input.model.split("/");
+    if (segments.length < 2) return input.driverKind;
+    return (
+      vendorIconKind(segments.slice(0, -1)) ??
+      modelFamilyIconKind(segments.at(-1)!) ??
+      input.driverKind
+    );
+  }
+  return input.driverKind;
 }
