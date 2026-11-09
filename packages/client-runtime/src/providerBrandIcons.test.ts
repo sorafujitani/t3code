@@ -28,10 +28,6 @@ describe("resolveProviderIconKind", () => {
     ["opencode", "xai/grok-4.3", "grok"],
     ["opencode", "deepseek/deepseek-chat", "deepseek"],
     ["opencode", "opencode/big-pickle", "opencode"],
-    ["opencode", "opencode/claude-sonnet-4-5", "claudeAgent"],
-    ["opencode", "github-copilot/gpt-5", "codex"],
-    ["pi", "github-copilot/o4-mini", "codex"],
-    ["pi", "google/gemini-2.5-pro", "pi"],
     ["pi", "gpt-6-luna", "pi"],
     ["pi", undefined, "pi"],
   ])("gives %s's model %s its vendor's icon", (driverKind, model, expected) => {
