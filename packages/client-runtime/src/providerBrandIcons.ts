@@ -23,24 +23,12 @@ const MODEL_VENDOR_ICON_KINDS: Readonly<Record<string, string>> = {
   deepseek: "deepseek",
 };
 
-const MODEL_FAMILY_ICON_KINDS: ReadonlyArray<readonly [RegExp, string]> = [
-  [/^claude/i, "claudeAgent"],
-  [/^(?:gpt|chatgpt|codex|o\d)(?:-|$)/i, "codex"],
-  [/^grok/i, "grok"],
-  [/^deepseek/i, "deepseek"],
-];
-
 function vendorIconKind(vendors: ReadonlyArray<string>): string | undefined {
   for (const vendor of vendors) {
     const kind = MODEL_VENDOR_ICON_KINDS[vendor.toLowerCase()];
     if (kind) return kind;
   }
   return undefined;
-}
-
-/** Gateways such as OpenCode Zen or GitHub Copilot name only the model, not its vendor. */
-function modelFamilyIconKind(modelId: string): string | undefined {
-  return MODEL_FAMILY_ICON_KINDS.find(([family]) => family.test(modelId))?.[1];
 }
 
 /** DeepSeek Harness model IDs are JSON `[vendor, model]` pairs. */
@@ -77,13 +65,7 @@ export function resolveProviderIconKind(input: {
     return vendorIconKind(deepseekModelVendors(input.model)) ?? "deepseek";
   }
   if (input.driverKind === "pi" || input.driverKind === "opencode") {
-    const segments = input.model.split("/");
-    if (segments.length < 2) return input.driverKind;
-    return (
-      vendorIconKind(segments.slice(0, -1)) ??
-      modelFamilyIconKind(segments.at(-1)!) ??
-      input.driverKind
-    );
+    return vendorIconKind(input.model.split("/").slice(0, -1)) ?? input.driverKind;
   }
   return input.driverKind;
 }
