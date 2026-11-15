@@ -234,6 +234,7 @@ export function createWorkspaceFocusController(doc: Document) {
           ? ['[data-testid="composer-editor"][contenteditable="true"]']
           : [
               ".xterm-helper-textarea",
+              "[data-file-content-focus]",
               ".diff-render-surface, .file-preview-virtualizer",
               "[data-panel-focus-default]",
               '[data-slot="scroll-area-viewport"], iframe, embed, video[controls], audio[controls]',
