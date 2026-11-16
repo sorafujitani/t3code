@@ -92,3 +92,52 @@ process.exit(response.status);
     assert.equal(fs.readFileSync(output, "utf8").trim(), result ? `result=${result}` : "");
   });
 }
+
+test("publication keeps the verified upstream snapshot when the remote advances", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sync-publish-test-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(dir, ".t3/upstream-sync"), { recursive: true });
+  fs.writeFileSync(path.join(dir, ".t3/upstream-sync/.git"), "");
+  fs.writeFileSync(
+    path.join(dir, "git"),
+    `#!/usr/bin/env node
+const fs = require('node:fs');
+const dir = process.env.RUNNER_TEMP;
+const args = process.argv.slice(2);
+if (args[0] === '-C') args.splice(0, 2);
+fs.appendFileSync(dir + '/git-calls', JSON.stringify(args) + '\\n');
+if (args[0] === 'rev-parse') process.stdout.write(dir + '/.git');
+if (args[0] === 'remote') process.stdout.write('https://github.com/owner/fork.git');
+if (args[0] === 'fetch' && args.some(arg => arg.startsWith('https://'))) fs.writeFileSync(dir + '/upstream-moved', '');
+if (args[0] === 'merge-base' && fs.existsSync(dir + '/upstream-moved')) process.exit(1);
+`,
+    { mode: 0o755 },
+  );
+  fs.writeFileSync(
+    path.join(dir, "gh"),
+    `#!/usr/bin/env node
+const args = process.argv.slice(2);
+if (args[0] === 'repo') process.stdout.write('owner/fork');
+if (args[0] === 'pr' && args[1] === 'create') process.stdout.write('https://github.com/owner/fork/pull/1');
+`,
+    { mode: 0o755 },
+  );
+  const run = spawnSync(
+    "bash",
+    [path.join(__dirname, "../../scripts/sync-upstream.sh"), "publish"],
+    {
+      cwd: dir,
+      env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, RUNNER_TEMP: dir },
+      encoding: "utf8",
+    },
+  );
+  assert.equal(run.status, 0, run.stderr);
+  const calls = fs
+    .readFileSync(path.join(dir, "git-calls"), "utf8")
+    .trim()
+    .split("\n")
+    .map(JSON.parse);
+  assert.ok(calls.some((args) => args[0] === "fetch" && args.includes("origin")));
+  assert.ok(calls.some((args) => args[0] === "push"));
+  assert.equal(fs.existsSync(path.join(dir, "upstream-moved")), false);
+});

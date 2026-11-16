@@ -85,7 +85,8 @@ verify() {
 publish() {
   local body="${1:-}"
   [ -z "$body" ] || body="$(cd "$(dirname "$body")" && pwd)/$(basename "$body")"
-  fetch
+  # Publish the upstream snapshot we verified; newer upstream commits belong to the next sync.
+  git -C "$root" fetch -q origin main
   require_merged
   git push -q --force origin "HEAD:refs/heads/$BRANCH"
   if [ -z "$body" ]; then
