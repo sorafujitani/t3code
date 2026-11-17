@@ -26,23 +26,15 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
+      - name: Checkout sync helpers
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
       - name: Merge upstream into main
         id: merge
-        run: |
-          if gh api --method POST "repos/$GH_REPO/merge-upstream" -f branch=main \
-            > "$RUNNER_TEMP/sync-result.json" 2> "$RUNNER_TEMP/sync-error.txt"; then
-            echo "result=synced" >> "$GITHUB_OUTPUT"
-            jq -r '.message, "Merge type: \(.merge_type)", "Base branch: \(.base_branch)"' \
-              "$RUNNER_TEMP/sync-result.json" >> "$GITHUB_STEP_SUMMARY"
-            exit 0
-          fi
-          cat "$RUNNER_TEMP/sync-error.txt"
-          # 409 is GitHub refusing a merge with conflicts. Anything else (permissions, outages) fails the job.
-          if ! grep -q "HTTP 409" "$RUNNER_TEMP/sync-error.txt"; then
-            echo "::error::Upstream sync failed. No force update was attempted."
-            exit 1
-          fi
-          echo "result=conflict" >> "$GITHUB_OUTPUT"
+        run: bash .github/scripts/sync-upstream.sh
 
       - name: Find conflicting files
         id: conflicts
