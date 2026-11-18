@@ -708,19 +708,22 @@ export function useThreadLifecycle(input: ThreadLifecycleInput) {
         try {
           const confirmed = await settlePromise(() =>
             api.dialogs.confirm(
-              `Delete thread "${activeThreadShell.title}"?\nThis permanently clears conversation history for this thread.`,
+              [
+                m(msg('Delete thread "{title}"?', { title: activeThreadShell.title })),
+                m(msg("This permanently clears conversation history for this thread.")),
+              ].join("\n"),
               { variant: "destructive", initialFocus: "confirm" },
             ),
           );
           if (confirmed._tag === "Failure" || !confirmed.value) return;
           const result = await deleteThread(activeThreadRef);
-          toastThreadActionFailure("Failed to delete thread")(result);
+          toastThreadActionFailure(m(msg("Failed to delete thread")))(result);
         } catch (error) {
           toastManager.add(
             stackedThreadToast({
               type: "error",
-              title: "Failed to delete thread",
-              description: error instanceof Error ? error.message : "An error occurred.",
+              title: m(msg("Failed to delete thread")),
+              description: thrownErrorMessage(error, m) ?? m(msg("An error occurred.")),
             }),
           );
         }

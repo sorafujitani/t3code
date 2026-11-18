@@ -4701,7 +4701,6 @@
   "d6783ef5e11f3e89": "Could not start a side chat.",
   "093c70146c496264": "The side chat was created, but it did not reach this client.",
   "0efeaa8d0ca3a757": "The side chat is no longer available.",
-  "61fc2531d076d396": "Could not set the side chat's permission mode.",
   "85081ece19825947": "Could not send the side chat message.",
   "035aa2e0196d86bf": "Could not reconnect environment",
   "ef6acc0fadc27b09": "Failed to reconnect.",
