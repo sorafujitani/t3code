@@ -1,4 +1,5 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
+import { errorDisplayMessage } from "@t3tools/client-runtime/errors";
 import { deriveThreadTitleSeed } from "@t3tools/client-runtime/operations";
 import {
   isAtomCommandInterrupted,
@@ -12,6 +13,8 @@ import {
   type RuntimeMode,
   type ScopedThreadRef,
 } from "@t3tools/contracts";
+import { msg, useGT } from "gt-react-native";
+import { m } from "../../i18n/messages";
 
 import * as Dialog from "../../components/ui/Dialog";
 import { uuidv4 } from "../../lib/uuid";
@@ -27,6 +30,7 @@ import { useOpenLinkedThread } from "./useOpenLinkedThread";
  * what the parent's composer would send, which its thread gets only on its next send.
  */
 export function useStartSideChat() {
+  const gt = useGT();
   const forkSideChat = useAtomCommand(threadEnvironment.forkSideChat, { reportFailure: false });
   const deleteThread = useAtomCommand(threadEnvironment.delete, { reportFailure: false });
   const startTurn = useAtomCommand(threadEnvironment.startTurn, { reportFailure: false });
@@ -38,7 +42,7 @@ export function useStartSideChat() {
   ) => {
     if (isAtomCommandInterrupted(failure)) return;
     const error = squashAtomCommandFailure(failure);
-    Dialog.alert("Side chat not started", error instanceof Error ? error.message : fallback);
+    Dialog.alert(gt("Side chat not started"), errorDisplayMessage(error, m) ?? fallback);
   };
 
   return async (
@@ -52,12 +56,12 @@ export function useStartSideChat() {
       input: {
         sourceThreadId: source.threadId,
         targetThreadId,
-        title: "Side chat",
+        title: m(msg("Side chat")),
         creationSource: "mobile",
       },
     });
     if (fork._tag === "Failure") {
-      alertFailure(fork, "Could not start a side chat.");
+      alertFailure(fork, gt("Could not start a side chat."));
       return false;
     }
     // Drops the empty side chat a failed start leaves behind; one that got its message stays.
@@ -69,15 +73,15 @@ export function useStartSideChat() {
     const targetRef = scopeThreadRef(source.environmentId, targetThreadId);
     if (!(await waitForThreadShell(targetRef))) {
       Dialog.alert(
-        "Side chat not started",
-        "The side chat was created, but it did not reach this device.",
+        gt("Side chat not started"),
+        gt("The side chat was created, but it did not reach this device."),
       );
       discard();
       return false;
     }
     const sideChat = appAtomRegistry.get(environmentThreadShells.threadShellAtom(targetRef));
     if (sideChat === null) {
-      Dialog.alert("Side chat not started", "The side chat is no longer available.");
+      Dialog.alert(gt("Side chat not started"), gt("The side chat is no longer available."));
       discard();
       return false;
     }
@@ -92,7 +96,7 @@ export function useStartSideChat() {
           attachments: [],
         },
         modelSelection: settings.modelSelection,
-        titleSeed: deriveThreadTitleSeed({ text: prompt, attachments: [] }),
+        titleSeed: deriveThreadTitleSeed({ text: prompt, attachments: [] }, m),
         // This fork keeps the Full access side chats get from the server.
         runtimeMode: sideChat.runtimeMode,
         interactionMode: "default",
@@ -100,7 +104,7 @@ export function useStartSideChat() {
       },
     });
     if (turn._tag === "Failure") {
-      alertFailure(turn, "Could not send the side chat message.");
+      alertFailure(turn, gt("Could not send the side chat message."));
       discard();
       return false;
     }
