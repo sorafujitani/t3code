@@ -1,6 +1,6 @@
 import { scopeThreadRef } from "@t3tools/client-runtime/environment";
 import { errorDisplayMessage } from "@t3tools/client-runtime/errors";
-import { deriveThreadTitleSeed } from "@t3tools/client-runtime/operations";
+import type { StartThreadTurnInput } from "@t3tools/client-runtime/operations";
 import {
   isAtomCommandInterrupted,
   squashAtomCommandFailure,
@@ -24,10 +24,15 @@ import { useAtomCommand } from "../../state/use-atom-command";
 import { waitForThreadShell } from "./threadForkNavigation";
 import { useOpenLinkedThread } from "./useOpenLinkedThread";
 
+export type SideChatMessage = Pick<
+  StartThreadTurnInput["message"],
+  "text" | "attachments" | "context"
+> & { readonly titleSeed: string };
+
 /**
- * Forks `source` at its latest stable point into a side chat, sends `prompt` there, and opens
- * it like any linked thread. Resolves false when the side chat did not start. `settings` are
- * what the parent's composer would send, which its thread gets only on its next send.
+ * Forks `source` at its latest stable point into a side chat, sends `message` there, and opens
+ * it like any linked thread. Resolves false when the side chat did not start. The parent's
+ * composer supplies model settings; the side chat keeps the server's Full access mode.
  */
 export function useStartSideChat() {
   const gt = useGT();
@@ -47,7 +52,7 @@ export function useStartSideChat() {
 
   return async (
     source: ScopedThreadRef,
-    prompt: string,
+    message: SideChatMessage,
     settings: { readonly runtimeMode: RuntimeMode; readonly modelSelection: ModelSelection },
   ): Promise<boolean> => {
     const targetThreadId = ThreadId.make(uuidv4());
@@ -85,18 +90,14 @@ export function useStartSideChat() {
       discard();
       return false;
     }
+    const { titleSeed, ...content } = message;
     const turn = await startTurn({
       environmentId: source.environmentId,
       input: {
         threadId: targetThreadId,
-        message: {
-          messageId: MessageId.make(uuidv4()),
-          role: "user",
-          text: prompt,
-          attachments: [],
-        },
+        message: { messageId: MessageId.make(uuidv4()), role: "user", ...content },
         modelSelection: settings.modelSelection,
-        titleSeed: deriveThreadTitleSeed({ text: prompt, attachments: [] }, m),
+        titleSeed,
         // This fork keeps the Full access side chats get from the server.
         runtimeMode: sideChat.runtimeMode,
         interactionMode: "default",
