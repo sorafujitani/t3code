@@ -40,6 +40,51 @@ async function reloadRightPanelStore() {
 }
 
 describe("rightPanelStore", () => {
+  it("opens one timeline surface for the thread that asked for it", () => {
+    const store = useRightPanelStore.getState();
+    store.open(refA, "work-timeline");
+    store.open(refA, "work-timeline");
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA),
+    ).toMatchObject({
+      isOpen: true,
+      activeSurfaceId: "work-timeline",
+      surfaces: [{ id: "work-timeline", kind: "work-timeline" }],
+    });
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refB).surfaces,
+    ).toEqual([]);
+    store.close(refA);
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA),
+    ).toMatchObject({
+      isOpen: false,
+      surfaces: [{ id: "work-timeline", kind: "work-timeline" }],
+    });
+    store.open(refA, "work-timeline");
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA).isOpen,
+    ).toBe(true);
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, refA).surfaces,
+    ).toHaveLength(1);
+  });
+
+  it("keeps a saved timeline surface when the panel state is restored", () => {
+    const migrated = migratePersistedRightPanelState({
+      byThreadKey: {
+        "env-1:thread-A": {
+          isOpen: true,
+          activeSurfaceId: "work-timeline",
+          surfaces: [{ id: "work-timeline", kind: "work-timeline" }],
+        },
+      },
+    });
+    expect(migrated.byThreadKey["env-1:thread-A"]?.surfaces).toEqual([
+      { id: "work-timeline", kind: "work-timeline" },
+    ]);
+  });
+
   it("opens a hosted side chat's panel actions in its parent's panel until unhosted", () => {
     const store = useRightPanelStore.getState();
     const unhost = hostRightPanel(refB, refA);

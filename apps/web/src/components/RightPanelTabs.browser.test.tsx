@@ -84,6 +84,7 @@ it.each([
           onAddTerminal={noop}
           onAddDiff={noop}
           onAddFiles={noop}
+          onAddWorkTimeline={noop}
           onAddPullRequest={noop}
           onAddPullRequests={noop}
           onAddDevice={noop}
@@ -92,6 +93,7 @@ it.each([
           terminalAvailable
           diffAvailable
           filesAvailable
+          workTimelineAvailable
           pullRequestAvailable
           pullRequestsAvailable
           deviceAvailable={false}
@@ -288,6 +290,7 @@ describe("RightPanelTabs", () => {
           onAddTerminal={noop}
           onAddDiff={noop}
           onAddFiles={noop}
+          onAddWorkTimeline={noop}
           onAddPullRequest={noop}
           onAddPullRequests={noop}
           onAddDevice={noop}
@@ -295,6 +298,7 @@ describe("RightPanelTabs", () => {
           terminalAvailable
           diffAvailable={false}
           filesAvailable={false}
+          workTimelineAvailable={false}
           pullRequestAvailable={false}
           pullRequestsAvailable={false}
           deviceAvailable={false}
@@ -361,6 +365,7 @@ function panel(activeSurface: RightPanelSurface) {
     onAddTerminal: noop,
     onAddDiff: noop,
     onAddFiles: noop,
+    onAddWorkTimeline: noop,
     onAddPullRequest: noop,
     onAddPullRequests: noop,
     onAddDevice: noop,
@@ -368,6 +373,7 @@ function panel(activeSurface: RightPanelSurface) {
     terminalAvailable: true,
     diffAvailable: true,
     filesAvailable: true,
+    workTimelineAvailable: true,
     pullRequestAvailable: true,
     pullRequestsAvailable: true,
     deviceAvailable: true,

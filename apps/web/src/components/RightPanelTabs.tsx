@@ -47,6 +47,7 @@ import {
   FileDiff,
   Files,
   Globe2,
+  ListTree,
   MessagesSquare,
   Plus,
   TerminalSquare,
@@ -148,6 +149,7 @@ export interface RightPanelTabsProps {
   onAddTerminal: () => void;
   onAddDiff: () => void;
   onAddFiles: () => void;
+  onAddWorkTimeline: () => void;
   onAddPullRequest: () => void;
   onAddPullRequests: () => void;
   onAddDevice: () => void;
@@ -157,6 +159,7 @@ export interface RightPanelTabsProps {
   terminalAvailable: boolean;
   diffAvailable: boolean;
   filesAvailable: boolean;
+  workTimelineAvailable: boolean;
   pullRequestAvailable: boolean;
   pullRequestsAvailable: boolean;
   deviceAvailable: boolean;
@@ -190,6 +193,7 @@ const SURFACE_DISABLED_REASONS = {
   pullRequests: msg("This thread has no linked items."),
   device: msg("Devices are only available from a thread."),
   sideChat: msg("Side chats start after the first message."),
+  workTimeline: msg("Timeline is only available when a project is open."),
 } as const;
 
 // Closed keepMounted popups must stop blocking shortcuts once their exit transition ends.
@@ -215,6 +219,7 @@ const SURFACE_UNAVAILABLE_HINTS = {
   pullRequests: msg("No linked items available."),
   device: msg("Available from a thread."),
   sideChat: msg("Available after the first message."),
+  workTimeline: msg("Available when a project is open."),
 } as const;
 
 type TabContextMenuAction =
@@ -332,6 +337,7 @@ function RightPanelEmptyState(props: {
   onAddTerminal: () => void;
   onAddDiff: () => void;
   onAddFiles: () => void;
+  onAddWorkTimeline: () => void;
   onAddPullRequest: () => void;
   onAddPullRequests: () => void;
   onAddDevice: () => void;
@@ -341,6 +347,7 @@ function RightPanelEmptyState(props: {
   terminalAvailable: boolean;
   diffAvailable: boolean;
   filesAvailable: boolean;
+  workTimelineAvailable: boolean;
   pullRequestAvailable: boolean;
   pullRequestsAvailable: boolean;
   deviceAvailable: boolean;
@@ -375,6 +382,14 @@ function RightPanelEmptyState(props: {
       available: props.filesAvailable,
       disabledReason: messages(SURFACE_UNAVAILABLE_HINTS.files),
       onClick: props.onAddFiles,
+    },
+    {
+      label: msg("Timeline"),
+      icon: ListTree,
+      shortcut: "W",
+      available: props.workTimelineAvailable,
+      disabledReason: messages(SURFACE_UNAVAILABLE_HINTS.workTimeline),
+      onClick: props.onAddWorkTimeline,
     },
     {
       label: msg("Diff"),
@@ -596,6 +611,8 @@ function surfaceTitle(
       return resolve(msg("Diff"));
     case "files":
       return resolve(msg("Files"));
+    case "work-timeline":
+      return resolve(msg("Timeline"));
     case "file":
       return surface.relativePath.slice(
         Math.max(surface.relativePath.lastIndexOf("/"), surface.relativePath.lastIndexOf("\\")) + 1,
@@ -683,6 +700,8 @@ function SurfaceIcon({
       return <FileDiff className="size-3 shrink-0" />;
     case "files":
       return <Files className="size-3 shrink-0" />;
+    case "work-timeline":
+      return <ListTree className="size-3 shrink-0" />;
     case "file":
       return (
         <PierreEntryIcon
@@ -1238,6 +1257,14 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
       onClick: props.onAddFiles,
     },
     {
+      label: msg("Timeline"),
+      icon: ListTree,
+      shortcut: "W",
+      available: props.workTimelineAvailable,
+      disabledReason: messages(SURFACE_DISABLED_REASONS.workTimeline),
+      onClick: props.onAddWorkTimeline,
+    },
+    {
       label: msg("Diff"),
       icon: FileDiff,
       shortcut: "D",
@@ -1687,6 +1714,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
             onAddTerminal={props.onAddTerminal}
             onAddDiff={props.onAddDiff}
             onAddFiles={props.onAddFiles}
+            onAddWorkTimeline={props.onAddWorkTimeline}
             onAddPullRequest={props.onAddPullRequest}
             onAddPullRequests={props.onAddPullRequests}
             onAddDevice={props.onAddDevice}
@@ -1695,6 +1723,7 @@ export function RightPanelTabs(props: RightPanelTabsProps) {
             terminalAvailable={props.terminalAvailable}
             diffAvailable={props.diffAvailable}
             filesAvailable={props.filesAvailable}
+            workTimelineAvailable={props.workTimelineAvailable}
             pullRequestAvailable={props.pullRequestAvailable}
             pullRequestsAvailable={props.pullRequestsAvailable}
             deviceAvailable={props.deviceAvailable}
