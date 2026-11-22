@@ -48,3 +48,13 @@ window title** in the same section. The window title then starts with the thread
 screen reader says them first. When the turn ends, only the status goes away.
 Anyone who can see your taskbar, window switcher, or shared screen sees it too, and time trackers
 that group by window title count each status separately.
+
+## Inspect a thread over time
+
+On web and desktop, choose **Open a surface → Timeline**. **Task tree** shows the latest plan and recent work in the thread. Open **Trajectory** to inspect individual records. Records appear newest first. Click a row to expand its
+input, output, images, and timestamps. Click the same row again to collapse it. Token counts belong to the provider step
+when the provider reports them.
+
+Search includes folded calls in the loaded records.
+New records appear automatically. Scroll toward the bottom to load older records, or choose
+**Load older records** to request another page. **Load grouped work** opens bundled tool calls.

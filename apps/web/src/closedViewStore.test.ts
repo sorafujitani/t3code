@@ -29,6 +29,20 @@ const snapshot: PreviewSessionSnapshot = {
 };
 
 describe("closedViewStore", () => {
+  it("keeps a closed timeline tab when saved history is restored", async () => {
+    const entry = {
+      id: "timeline",
+      kind: "panel-tab" as const,
+      threadRef: refA,
+      surface: { kind: "work-timeline" as const, id: "work-timeline" as const },
+    };
+    const { storage, name } = useClosedViewStore.persist.getOptions();
+    await storage!.setItem(name!, { state: { entries: [entry] }, version: 1 });
+    await useClosedViewStore.persist.rehydrate();
+    expect(useClosedViewStore.persist.hasHydrated()).toBe(true);
+    expect(useClosedViewStore.getState().entries).toEqual([entry]);
+  });
+
   it.each([
     { id: "bad", kind: "browser", threadRef: refA, snapshot: {} },
     {

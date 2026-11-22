@@ -36,6 +36,9 @@ const DevicePanel = lazy(() =>
   import("../device/DevicePanel").then((module) => ({ default: module.DevicePanel })),
 );
 const FilePreviewPanel = lazy(() => import("../files/FilePreviewPanel"));
+const WorkTimelinePanel = lazy(() =>
+  import("./WorkTimelinePanel").then((module) => ({ default: module.WorkTimelinePanel })),
+);
 
 type RightPanelTerminalProps = Omit<
   PersistentThreadTerminalPanelProps,
@@ -273,6 +276,26 @@ export function RightPanelSurfaceContent(props: {
             onPendingChange={files.onPendingChange}
             selectedFilePending={surface.kind === "file" && files.pendingSurfaceIds.has(surface.id)}
             workspaceMutationId={props.workspaceMutationId}
+          />
+        </Suspense>
+      );
+    }
+    case "work-timeline": {
+      const root = props.files.workspaceRoot;
+      if (!root) {
+        return (
+          <p className="px-3 py-4 text-sm text-muted-foreground">
+            {gt("Timeline is available when a project is open.")}
+          </p>
+        );
+      }
+      return (
+        <Suspense fallback={null}>
+          <WorkTimelinePanel
+            key={`${scopedThreadKey(threadRef)}:${root}`}
+            threadRef={threadRef}
+            workspaceRoot={root}
+            visible={visible}
           />
         </Suspense>
       );

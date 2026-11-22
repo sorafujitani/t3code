@@ -44,6 +44,34 @@ beforeEach(() => {
 });
 
 describe("reopenClosedView", () => {
+  it("reopens a timeline tab for the same thread and skips it without a workspace", async () => {
+    const panels = useRightPanelStore.getState();
+    panels.open(threadRef, "work-timeline");
+    panels.closeSurface(threadRef, "work-timeline");
+    const entry = useClosedViewStore.getState().entries[0];
+    expect(entry).toMatchObject({
+      kind: "panel-tab",
+      surface: { id: "work-timeline", kind: "work-timeline" },
+    });
+    if (entry?.kind !== "panel-tab") return;
+    expect(await reopenClosedView(entry, { openPreview: vi.fn(), workspaceAvailable: false })).toBe(
+      false,
+    );
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, threadRef).surfaces,
+    ).toEqual([]);
+    expect(await reopenClosedView(entry, { openPreview: vi.fn(), workspaceAvailable: true })).toBe(
+      true,
+    );
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, threadRef)
+        .activeSurfaceId,
+    ).toBe("work-timeline");
+    expect(
+      selectThreadRightPanelState(useRightPanelStore.getState().byThreadKey, threadRef).surfaces,
+    ).toEqual([{ id: "work-timeline", kind: "work-timeline" }]);
+  });
+
   it.each([
     { relativePath: "src/app.ts", line: 18, folderTrail: undefined },
     { relativePath: "apps", line: null, folderTrail: "apps/web/src" },

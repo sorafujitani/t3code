@@ -1617,6 +1617,7 @@ export function PullRequestsPage() {
             onAddTerminal={() => undefined}
             onAddDiff={() => undefined}
             onAddFiles={() => undefined}
+            onAddWorkTimeline={() => undefined}
             onAddPullRequest={() => undefined}
             onAddPullRequests={() => undefined}
             onAddDevice={() => undefined}
@@ -1624,6 +1625,7 @@ export function PullRequestsPage() {
             terminalAvailable={false}
             diffAvailable={false}
             filesAvailable={false}
+            workTimelineAvailable={false}
             pullRequestAvailable={false}
             pullRequestsAvailable={false}
             deviceAvailable={false}
