@@ -18,7 +18,7 @@ import { RightPanelTabs, type RightPanelTabsProps } from "./RightPanelTabs";
 import { subscribePreviewAction } from "./preview/previewActionBus";
 
 it.each([
-  { kind: "side-chat", id: "side-chat:a", threadId: ThreadId.make("a") },
+  { kind: "thread", id: "thread:a", threadId: ThreadId.make("a") },
   { kind: "diff", id: "diff" },
   { kind: "files", id: "files" },
   {
@@ -46,7 +46,7 @@ it.each([
     const noop = () => {};
     const surfaces = [
       surface,
-      { kind: "side-chat", id: "side-chat:b", threadId: ThreadId.make("b") },
+      { kind: "thread", id: "thread:b", threadId: ThreadId.make("b") },
     ] as const;
     function Panel() {
       const [active, setActive] = useState<RightPanelSurface>(surface);
@@ -211,7 +211,11 @@ function trackpad() {
   };
   let scrolling = false;
   return {
-    bridge: { onTrackpadScrollBegin: subscribe(begin), onTrackpadScrollEnd: subscribe(end) },
+    bridge: {
+      onTrackpadScrollBegin: subscribe(begin),
+      onTrackpadScrollEnd: subscribe(end),
+      onMenuAction: () => () => {},
+    },
     scroll(target: Element, deltas: readonly number[]) {
       let scroller: Element | null = target;
       while (

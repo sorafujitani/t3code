@@ -344,7 +344,7 @@ describe("workspace area focus", () => {
     const panel = fixture.area("panel", 3);
     const content = document.createElement("div");
     content.dataset.rightPanelSurfaceContent = "true";
-    content.dataset.rightPanelSurfaceKind = "side-chat";
+    content.dataset.rightPanelSurfaceKind = "thread";
     content.innerHTML = "<button>Bring back</button>";
     panel.element.append(content);
     panel.button.focus();
@@ -357,6 +357,10 @@ describe("workspace area focus", () => {
     editor.textContent = "Draft";
     composer.element.append(editor);
     await vi.waitFor(() => expect(document.activeElement).toBe(editor));
+    content.innerHTML =
+      '<div data-side-thread-composer="read-only"><button>Open parent</button></div>';
+    expect(fixture.controller.focus("panel", false)).toBe(true);
+    expect(document.activeElement).toBe(content.querySelector("button"));
   });
 
   it("focuses a newly opened side chat's composer once it mounts", async () => {
@@ -369,12 +373,12 @@ describe("workspace area focus", () => {
     const panel = fixture.area("panel", 3);
     const content = document.createElement("div");
     content.dataset.rightPanelSurfaceContent = "true";
-    content.dataset.rightPanelSurfaceKind = "side-chat";
+    content.dataset.rightPanelSurfaceKind = "thread";
     content.innerHTML = "<div data-side-chat-pane><button>Bring back</button></div>";
     panel.element.append(content);
     useRightPanelStore
       .getState()
-      .openSideChat(
+      .openThread(
         scopeThreadRef(EnvironmentId.make("e"), ThreadId.make("main")),
         ThreadId.make("side"),
       );
