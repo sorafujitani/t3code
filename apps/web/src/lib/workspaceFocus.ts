@@ -229,18 +229,20 @@ export function createWorkspaceFocusController(doc: Document) {
     if (surface && !surface.hasChildNodes()) return false;
     if (surface && !restore && !selector) {
       const content = surface.querySelector<HTMLElement>("[data-file-preview-content]") ?? surface;
-      const selectors =
-        surface.dataset.rightPanelSurfaceKind === "side-chat"
-          ? ['[data-testid="composer-editor"][contenteditable="true"]']
-          : [
-              ".xterm-helper-textarea",
-              "[data-file-content-focus]",
-              ".diff-render-surface, .file-preview-virtualizer",
-              "[data-panel-focus-default]",
-              '[data-slot="scroll-area-viewport"], iframe, embed, video[controls], audio[controls]',
-              "[data-workspace-focus-default]",
-              FOCUSABLE_SELECTOR,
-            ];
+      const waitsForComposer =
+        surface.dataset.rightPanelSurfaceKind === "thread" &&
+        !surface.querySelector('[data-side-thread-composer="read-only"]');
+      const selectors = waitsForComposer
+        ? ['[data-testid="composer-editor"][contenteditable="true"]']
+        : [
+            ".xterm-helper-textarea",
+            "[data-file-content-focus]",
+            ".diff-render-surface, .file-preview-virtualizer",
+            "[data-panel-focus-default]",
+            '[data-slot="scroll-area-viewport"], iframe, embed, video[controls], audio[controls]',
+            "[data-workspace-focus-default]",
+            FOCUSABLE_SELECTOR,
+          ];
       for (const candidateSelector of selectors) {
         for (const candidate of content.querySelectorAll<HTMLElement>(candidateSelector)) {
           const target =
@@ -253,7 +255,7 @@ export function createWorkspaceFocusController(doc: Document) {
             return true;
         }
       }
-      if (surface.dataset.rightPanelSurfaceKind === "side-chat") return false;
+      if (waitsForComposer) return false;
       content.tabIndex = -1;
       content.focus({ preventScroll: true });
       return doc.activeElement === content;
@@ -347,6 +349,8 @@ export function createWorkspaceFocusController(doc: Document) {
       if (
         doc.activeElement !== doc.body ||
         !doc.hasFocus() ||
+        // Scrolling swaps these out; focusing elsewhere would pull a screen reader's cursor along.
+        lost.closest("[inert][data-workspace-scroll-swap]") ||
         (isWorkspaceElementVisible(lost) && !lost.matches(":disabled"))
       )
         return;
@@ -450,7 +454,7 @@ export function startWorkspaceFocus(router: AnyRouter): () => void {
         // A side chat mounts its toolbar before its composer; wait for the composer.
         requestWorkspaceFocus({
           area: "panel",
-          restore: !next.activeSurfaceId?.startsWith("side-chat:"),
+          restore: !next.activeSurfaceId?.startsWith("thread:"),
         });
     }
   });
