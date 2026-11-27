@@ -554,6 +554,7 @@ describe("add surface launcher", () => {
         terminalAvailable={false}
         diffAvailable={false}
         filesAvailable={false}
+        workTimelineAvailable={false}
         pullRequestAvailable={false}
         pullRequestsAvailable={false}
         deviceAvailable={false}

@@ -210,7 +210,7 @@ it.each([false, true])(
         />
       </SidebarProvider>,
     );
-    await userEvent.click(screen.getByLabelText("Filter threads by project", { exact: true }));
+    await userEvent.click(screen.getByLabelText("Projects", { exact: true }));
     await userEvent.click(page.getByRole("option", { name: /idle/ }));
     await vi.waitFor(() => expect(screen.router?.state.location.pathname).toBe("/local/newer"));
     await userEvent.click(screen.getByRole("textbox", { name: "Message" }));
